@@ -32,7 +32,7 @@ export const SocketContextProvider = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    const socketUrl = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
+    const socketUrl = import.meta.env.VITE_SERVER_URL ?? 'http://localhost:5000';
     const socketInstance = io(socketUrl, {
       withCredentials: true,
       transports: ['websocket', 'polling']
