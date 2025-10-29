@@ -12,7 +12,7 @@ import { io } from 'socket.io-client';
  * @returns {import('socket.io-client').Socket}
  */
 export const createSocketConnection = () => {
-  const serverUrl = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
+  const serverUrl = import.meta.env.VITE_SERVER_URL ?? 'http://localhost:5000';
   return io(serverUrl, {
     withCredentials: true,
     transports: ['websocket', 'polling']
