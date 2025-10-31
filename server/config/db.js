@@ -6,26 +6,16 @@
 
 import mongoose from 'mongoose';
 
-/**
- * @function connectDatabase
- * @description Establishes a connection to MongoDB using the URI supplied in the
- * environment variables. Exits the process if a connection cannot be established.
- * @returns {Promise<void>} Resolves when the connection is successfully established.
- */
-const connectDatabase = async () => {
-  const databaseUri = process.env.MONGODB_URI;
+const DEFAULT_DB_NAME = 'bidding_system';
+const DEFAULT_URI = `mongodb://127.0.0.1:27017/${DEFAULT_DB_NAME}`;
 
-  if (!databaseUri) {
-    console.error('❌ Missing MONGODB_URI in environment configuration.');
-    process.exit(1);
-  }
+const connectDatabase = async () => {
+  const envUri = (process.env.MONGO_URI || process.env.MONGODB_URI || '').trim();
+  const mongoUri = envUri || DEFAULT_URI;
 
   try {
-    await mongoose.connect(databaseUri, {
-      serverSelectionTimeoutMS: 5000
-    });
-
-    console.log(`✅ Connected to MongoDB at ${mongoose.connection.host}`);
+    await mongoose.connect(mongoUri);
+    console.log(`✅ Connected to MongoDB: ${mongoUri}`);
   } catch (connectionError) {
     console.error('❌ Failed to connect to MongoDB:', connectionError);
     process.exit(1);

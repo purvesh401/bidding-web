@@ -4,6 +4,7 @@
  */
 
 import { Router } from 'express';
+import multer from 'multer';
 import {
   createItem,
   getItems,
@@ -15,9 +16,10 @@ import protectRoute from '../middleware/protectRoute.js';
 import { validateItemPayload, validateMongoIdParam } from '../middleware/validators.js';
 
 const router = Router();
+const upload = multer({ limits: { fileSize: 5 * 1024 * 1024 } }); // 5MB per file
 
 router.get('/', getItems);
-router.post('/', protectRoute, validateItemPayload, createItem);
+router.post('/', protectRoute, upload.array('images', 5), validateItemPayload, createItem);
 router.get('/:id', validateMongoIdParam, getItemById);
 router.put('/:id', protectRoute, validateMongoIdParam, validateItemPayload, updateItem);
 router.delete('/:id', protectRoute, validateMongoIdParam, deleteItem);

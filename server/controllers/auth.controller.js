@@ -19,18 +19,27 @@ export const registerUser = async (req, res) => {
   try {
     const { username, email, password, role, phoneNumber, address } = req.body;
 
+    // Demo-friendly behavior: if the email already exists, treat this as a login
+    // instead of failing registration. This removes friction in first-time demos.
     const existingUserByEmail = await User.findOne({ email });
     if (existingUserByEmail) {
-      return res.status(400).json({ message: 'An account with this email already exists.' });
+      generateTokenAndSetCookie(existingUserByEmail._id.toString(), res);
+      const { password: _password, ...userWithoutPassword } = existingUserByEmail.toObject();
+      return res.status(200).json({
+        message: 'Welcome back. You are now signed in.',
+        user: userWithoutPassword
+      });
     }
 
-    const existingUserByUsername = await User.findOne({ username });
-    if (existingUserByUsername) {
-      return res.status(400).json({ message: 'Username is already in use. Please choose another.' });
+    // Username collision is uncommon; if it happens, append a random suffix automatically
+    let finalUsername = username || email?.split('@')[0] || 'user';
+    const usernameTaken = await User.findOne({ username: finalUsername });
+    if (usernameTaken) {
+      finalUsername = `${finalUsername}_${Math.floor(Math.random() * 10000)}`;
     }
 
     const newUser = await User.create({
-      username,
+      username: finalUsername,
       email,
       password,
       role: role || 'buyer',
@@ -65,11 +74,13 @@ export const loginUser = async (req, res) => {
 
     const user = await User.findOne({ email });
     if (!user) {
+      console.warn('Login failed: user not found for email', email);
       return res.status(401).json({ message: 'Invalid email or password.' });
     }
 
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
+      console.warn('Login failed: invalid password for user', user._id.toString());
       return res.status(401).json({ message: 'Invalid email or password.' });
     }
 

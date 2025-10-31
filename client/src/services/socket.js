@@ -15,6 +15,12 @@ export const createSocketConnection = () => {
   const serverUrl = import.meta.env.VITE_SERVER_URL ?? 'http://localhost:5000';
   return io(serverUrl, {
     withCredentials: true,
-    transports: ['websocket', 'polling']
+    transports: ['websocket', 'polling'],
+    reconnection: true,
+    reconnectionDelay: 1000,
+    reconnectionAttempts: 5,
+    timeout: 20000,
+    autoConnect: true,
+    forceNew: false
   });
 };

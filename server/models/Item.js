@@ -29,13 +29,13 @@ const itemSchema = new Schema(
       type: String,
       required: [true, 'Item title is required.'],
       trim: true,
-      minlength: [5, 'Title must be at least 5 characters.'],
+      minlength: [2, 'Title must be at least 2 characters.'],
       maxlength: [100, 'Title cannot exceed 100 characters.']
     },
     description: {
       type: String,
       required: [true, 'Item description is required.'],
-      minlength: [50, 'Description must be at least 50 characters.'],
+      minlength: [10, 'Description must be at least 10 characters.'],
       maxlength: [2000, 'Description cannot exceed 2000 characters.']
     },
     category: {

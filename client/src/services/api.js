@@ -30,7 +30,10 @@ aioResponseInterceptor(api);
 function aioRequestInterceptor(instance) {
   instance.interceptors.request.use(
     (config) => {
-      console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+      // Don't log auth check requests to reduce noise
+      if (config.url !== '/auth/me') {
+        console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+      }
       return config;
     },
     (error) => {
@@ -56,6 +59,12 @@ function aioResponseInterceptor(instance) {
       }
 
       const { status } = error.response;
+      const { url } = error.config;
+
+      // Don't show toast or redirect for auth check failures
+      if (status === 401 && url === '/auth/me') {
+        return Promise.reject(error);
+      }
 
       if (status === 401) {
         toast.error('Please log in to continue.');

@@ -69,7 +69,10 @@ A production-ready full-stack web application for managing and participating in 
 5. **Start Development Servers**
    ```bash
    # Backend (from /server)
-   npm run dev
+   # Demo mode (no auth required)
+   set DISABLE_AUTH=true&& npm run dev   # Windows CMD
+   # Or PowerShell
+   $env:DISABLE_AUTH="true"; npm run dev
 
    # Frontend (from /client)
    npm start
@@ -137,8 +140,12 @@ Populate the `.env` files using the provided `.env.example` templates.
 - `BCRYPT_ROUNDS` – bcrypt salt rounds (default 10)
 
 ### Client `.env`
-- `REACT_APP_API_URL` – API base URL (default http://localhost:5000/api)
-- `REACT_APP_SERVER_URL` – Backend root URL (default http://localhost:5000)
+- `VITE_API_URL` – API base URL (default http://localhost:5000/api)
+- `VITE_SERVER_URL` – Backend root URL (default http://localhost:5000)
+
+### Demo Mode (No Authentication)
+- Set `DISABLE_AUTH=true` in `server/.env` to bypass authentication checks. In this mode, protected routes act as if a guest user is logged in, preventing auth-related errors during demos.
+- Sample environment templates are provided: `server/env.example` and `client/env.example`. Copy them to `.env` in each folder.
 
 ## 🧯 Troubleshooting
 

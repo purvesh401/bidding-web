@@ -45,7 +45,15 @@ export const placeBid = async (req, res) => {
       return res.status(400).json({ message: 'Auction has already ended.' });
     }
 
-    if (auctionItem.sellerId.toString() === bidderId.toString()) {
+    // Debug: log identities involved in self-bid check
+    console.log('Bidder vs Seller check:', {
+      bidderId: bidderId?.toString(),
+      sellerId: auctionItem.sellerId?.toString(),
+      disableAuth: process.env.DISABLE_AUTH
+    });
+
+    // In demo mode, skip self-bid restriction because the demo user ID is reused
+    if (process.env.DISABLE_AUTH !== 'true' && auctionItem.sellerId.toString() === bidderId.toString()) {
       await session.abortTransaction();
       return res.status(400).json({ message: 'Sellers cannot bid on their own items.' });
     }
@@ -76,7 +84,6 @@ export const placeBid = async (req, res) => {
     await auctionItem.save({ session });
 
     await session.commitTransaction();
-    session.endSession();
 
     const populatedBid = await Bid.findById(bidDocument[0]._id)
       .populate('bidderId', 'username')
@@ -103,10 +110,21 @@ export const placeBid = async (req, res) => {
       updatedItem: auctionItem.toObject()
     });
   } catch (bidError) {
-    await session.abortTransaction();
-    session.endSession();
+    if (session.inTransaction()) {
+      try {
+        await session.abortTransaction();
+      } catch (_) {
+        // swallow abort errors (e.g., abort after commit)
+      }
+    }
     console.error('Error placing bid:', bidError);
     res.status(500).json({ message: 'Server error while placing bid.' });
+  } finally {
+    try {
+      session.endSession();
+    } catch (_) {
+      // no-op
+    }
   }
 };
 
