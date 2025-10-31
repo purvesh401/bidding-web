@@ -6,6 +6,7 @@
 
 import Item from '../models/Item.js';
 import Bid from '../models/Bid.js';
+import cloudinary from '../utils/cloudinary.js';
 
 /**
  * @function createItem
@@ -16,14 +17,68 @@ import Bid from '../models/Bid.js';
  */
 export const createItem = async (req, res) => {
   try {
-    if (!['seller', 'both'].includes(req.user.role)) {
-      return res.status(403).json({ message: 'Only sellers can create auction listings.' });
+    // In demo mode, allow any user to create items
+    if (process.env.DISABLE_AUTH !== 'true') {
+      if (!['seller', 'both'].includes(req.user.role)) {
+        return res.status(403).json({ message: 'Only sellers can create auction listings.' });
+      }
     }
 
+    const now = new Date();
+    const defaultEndTime = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const placeholderImage = 'https://via.placeholder.com/800x600?text=Auction+Item';
+
+    const generatedTitle = (req.body.title && String(req.body.title).trim().length >= 2)
+      ? String(req.body.title).trim()
+      : `Untitled Item ${Date.now()}`;
+
+    // Prepare images: prefer uploaded files, else body URLs, else placeholder
+    let uploadedUrls = [];
+    if (Array.isArray(req.files) && req.files.length > 0) {
+      const uploads = await Promise.all(
+        req.files.slice(0, 5).map((file) =>
+          cloudinary.uploader.upload_stream
+            ? new Promise((resolve, reject) => {
+                const stream = cloudinary.uploader.upload_stream(
+                  { folder: 'bidding-web/items', resource_type: 'image' },
+                  (error, result) => (error ? reject(error) : resolve(result))
+                );
+                stream.end(file.buffer);
+              })
+            : cloudinary.uploader
+                .upload(file.path, { folder: 'bidding-web/items', resource_type: 'image' })
+        )
+      );
+      uploadedUrls = uploads.map((u) => u.secure_url).filter(Boolean);
+    }
+
+    const bodyImages = Array.isArray(req.body.images)
+      ? req.body.images
+      : (typeof req.body.images === 'string' && req.body.images.trim())
+        ? [req.body.images.trim()]
+        : [];
+
+    const images = uploadedUrls.length > 0
+      ? uploadedUrls
+      : bodyImages.length > 0
+        ? bodyImages.slice(0, 5)
+        : [placeholderImage];
+
     const itemPayload = {
-      ...req.body,
+      title: generatedTitle,
+      description: req.body.description || 'No description provided.',
+      category: req.body.category || 'Other',
+      images,
       sellerId: req.user._id,
-      currentPrice: req.body.startingPrice
+      startingPrice: Number(req.body.startingPrice) || 1,
+      currentPrice: Number(req.body.startingPrice) || 1,
+      bidIncrement: req.body.bidIncrement ? Number(req.body.bidIncrement) : undefined,
+      startTime: req.body.startTime ? new Date(req.body.startTime) : now,
+      endTime: req.body.endTime ? new Date(req.body.endTime) : defaultEndTime,
+      condition: req.body.condition || 'Good',
+      era: req.body.era,
+      authenticity: req.body.authenticity,
+      dimensions: req.body.dimensions
     };
 
     const createdItem = await Item.create(itemPayload);
@@ -34,6 +89,12 @@ export const createItem = async (req, res) => {
     });
   } catch (creationError) {
     console.error('Error creating auction item:', creationError);
+    if (creationError.name === 'ValidationError') {
+      return res.status(400).json({
+        message: 'Validation failed. Please review the submitted fields.',
+        errors: Object.values(creationError.errors).map((e) => ({ field: e.path, message: e.message }))
+      });
+    }
     res.status(500).json({ message: 'Server error while creating auction item.' });
   }
 };

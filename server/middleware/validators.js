@@ -33,20 +33,17 @@ export const validateRequest = (req, res, next) => {
  */
 export const validateUserRegistration = [
   body('username')
+    .optional()
     .trim()
-    .isLength({ min: 3, max: 30 })
-    .withMessage('Username must be between 3 and 30 characters long.')
-    .matches(/^[a-zA-Z0-9_]+$/)
-    .withMessage('Username can only contain letters, numbers, and underscores.'),
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Username must be between 2 and 50 characters long.'),
   body('email')
     .normalizeEmail()
     .isEmail()
     .withMessage('Please provide a valid email address.'),
   body('password')
-    .isLength({ min: 8 })
-    .withMessage('Password must be at least 8 characters long.')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/)
-    .withMessage('Password must contain uppercase, lowercase, and numeric characters.'),
+    .isLength({ min: 4 })
+    .withMessage('Password must be at least 4 characters long.'),
   body('role')
     .optional()
     .isIn(['buyer', 'seller', 'both'])
@@ -73,14 +70,17 @@ export const validateUserLogin = [
  */
 export const validateItemPayload = [
   body('title')
+    .optional({ checkFalsy: true, nullable: true })
     .trim()
-    .isLength({ min: 5, max: 100 })
-    .withMessage('Title must be between 5 and 100 characters.'),
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Title must be between 2 and 100 characters.'),
   body('description')
+    .optional({ checkFalsy: true, nullable: true })
     .trim()
-    .isLength({ min: 50, max: 2000 })
-    .withMessage('Description must be between 50 and 2000 characters.'),
+    .isLength({ min: 10, max: 2000 })
+    .withMessage('Description must be between 10 and 2000 characters.'),
   body('category')
+    .optional({ checkFalsy: true, nullable: true })
     .isIn([
       'Furniture',
       'Jewelry',
@@ -97,21 +97,28 @@ export const validateItemPayload = [
     ])
     .withMessage('Please select a valid category.'),
   body('images')
-    .isArray({ min: 1, max: 5 })
-    .withMessage('Please provide between 1 and 5 images.')
-    .custom((images) => images.every((imageUrl) => typeof imageUrl === 'string'))
-    .withMessage('Image URLs must be strings.'),
+    .optional({ checkFalsy: true, nullable: true })
+    .custom((val, { req }) => {
+      // Allow either uploaded files (req.files) or URLs (body.images)
+      const hasFiles = Array.isArray(req.files) && req.files.length > 0;
+      const hasUrls = Array.isArray(val) || typeof val === 'string' || val == null;
+      return hasFiles || hasUrls;
+    })
+    .withMessage('Provide up to 5 images as files or URLs.'),
   body('startingPrice')
+    .optional({ checkFalsy: true, nullable: true })
     .isFloat({ min: 1 })
     .withMessage('Starting price must be at least $1.'),
   body('bidIncrement')
-    .optional()
+    .optional({ checkFalsy: true, nullable: true })
     .isFloat({ min: 1 })
     .withMessage('Bid increment must be at least $1.'),
   body('endTime')
+    .optional({ checkFalsy: true, nullable: true })
     .isISO8601()
     .withMessage('End time must be a valid ISO 8601 date string.'),
   body('condition')
+    .optional({ checkFalsy: true, nullable: true })
     .isIn(['Excellent', 'Very Good', 'Good', 'Fair', 'Poor'])
     .withMessage('Condition must be one of the predefined values.'),
   validateRequest

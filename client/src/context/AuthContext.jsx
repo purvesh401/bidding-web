@@ -3,7 +3,7 @@
  * @description React context providing global authentication state and helper functions.
  */
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { toast } from 'react-toastify';
 import api from '../services/api.js';
 
@@ -31,6 +31,7 @@ export const useAuth = () => {
 export const AuthContextProvider = ({ children }) => {
   const [authUser, setAuthUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const hasCheckedAuthRef = useRef(false);
 
   /**
    * @function fetchCurrentUser
@@ -38,19 +39,31 @@ export const AuthContextProvider = ({ children }) => {
    * @returns {Promise<void>}
    */
   const fetchCurrentUser = useCallback(async () => {
+    // Only check once per session using ref
+    if (hasCheckedAuthRef.current) {
+      return;
+    }
+
+    hasCheckedAuthRef.current = true;
+
     try {
       const response = await api.get('/auth/me');
       setAuthUser(response.data.user);
     } catch (error) {
+      // Only log errors that are not 401 (unauthorized)
+      if (error.response?.status !== 401) {
+        console.error('Auth check failed:', error.message);
+      }
       setAuthUser(null);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, []); // Empty dependency array since we use ref
 
   useEffect(() => {
+    // Only fetch user on initial load
     fetchCurrentUser();
-  }, [fetchCurrentUser]);
+  }, []); // Remove fetchCurrentUser from dependencies to prevent re-fetching
 
   /**
    * @function login

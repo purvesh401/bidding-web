@@ -3,7 +3,7 @@
  * @description Form for sellers to create new auction listings.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { Card, Form, Row, Col, Button } from 'react-bootstrap';
@@ -47,28 +47,34 @@ const CreateListing = () => {
    * @param {Record<string, string>} formData - Raw form values captured by react-hook-form.
    * @returns {Promise<void>}
    */
+  const [selectedFiles, setSelectedFiles] = useState([]);
+
   const onSubmit = async (formData) => {
-    const payload = {
-      title: formData.title,
-      description: formData.description,
-      category: formData.category,
-      images: formData.images.split(',').map((url) => url.trim()).filter(Boolean),
-      startingPrice: Number(formData.startingPrice),
-      bidIncrement: Number(formData.bidIncrement),
-      endTime: formData.endTime,
-      condition: formData.condition,
-      reservePrice: formData.reservePrice ? Number(formData.reservePrice) : undefined,
-      dimensions: {
-        height: formData.dimensionsHeight ? Number(formData.dimensionsHeight) : undefined,
-        width: formData.dimensionsWidth ? Number(formData.dimensionsWidth) : undefined,
-        depth: formData.dimensionsDepth ? Number(formData.dimensionsDepth) : undefined,
-        weight: formData.dimensionsWeight ? Number(formData.dimensionsWeight) : undefined,
-        unit: formData.dimensionsUnit
-      }
-    };
+    const form = new FormData();
+    form.append('title', formData.title);
+    form.append('description', formData.description);
+    form.append('category', formData.category);
+    const urlList = formData.images
+      ? formData.images.split(',').map((u) => u.trim()).filter(Boolean)
+      : [];
+    urlList.forEach((u) => form.append('images', u));
+    form.append('startingPrice', String(Number(formData.startingPrice)));
+    form.append('bidIncrement', String(Number(formData.bidIncrement)));
+    if (formData.endTime) form.append('endTime', formData.endTime);
+    form.append('condition', formData.condition);
+    if (formData.reservePrice) form.append('reservePrice', String(Number(formData.reservePrice)));
+    if (formData.dimensionsHeight) form.append('dimensions[height]', String(Number(formData.dimensionsHeight)));
+    if (formData.dimensionsWidth) form.append('dimensions[width]', String(Number(formData.dimensionsWidth)));
+    if (formData.dimensionsDepth) form.append('dimensions[depth]', String(Number(formData.dimensionsDepth)));
+    if (formData.dimensionsWeight) form.append('dimensions[weight]', String(Number(formData.dimensionsWeight)));
+    form.append('dimensions[unit]', formData.dimensionsUnit);
+
+    selectedFiles.forEach((file) => form.append('images', file));
 
     try {
-      const response = await api.post('/items', payload);
+      const response = await api.post('/items', form, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       toast.success('Auction listing created successfully.');
       navigate(`/items/${response.data.item._id}`);
     } catch (error) {
@@ -129,14 +135,22 @@ const CreateListing = () => {
             </Col>
             <Col xs={12}>
               <Form.Group controlId="listingImages">
-                <Form.Label>Image URLs (comma separated)</Form.Label>
+                <Form.Label>Image URLs (comma separated) or Upload Images</Form.Label>
                 <Form.Control
                   type="text"
                   placeholder="https://example.com/photo1.jpg, https://example.com/photo2.jpg"
-                  {...register('images', { required: 'At least one image URL is required.' })}
+                  {...register('images')}
                   isInvalid={Boolean(errors.images)}
                 />
                 <Form.Control.Feedback type="invalid">{errors.images?.message}</Form.Control.Feedback>
+              </Form.Group>
+              <Form.Group className="mt-2" controlId="listingImageFiles">
+                <Form.Control
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={(e) => setSelectedFiles(Array.from(e.target.files || []).slice(0, 5))}
+                />
               </Form.Group>
             </Col>
             <Col md={6}>

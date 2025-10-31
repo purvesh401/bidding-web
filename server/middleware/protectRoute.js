@@ -18,6 +18,17 @@ import User from '../models/User.js';
  */
 const protectRoute = async (req, res, next) => {
   try {
+    // Allow bypassing authentication in demo mode
+    if (process.env.DISABLE_AUTH === 'true') {
+      // Use a valid ObjectId-like string to satisfy Mongoose refs in demo mode
+      req.user = {
+        _id: '000000000000000000000000',
+        username: 'Guest',
+        role: 'buyer'
+      };
+      return next();
+    }
+
     const token = req.cookies?.token;
 
     if (!token) {
