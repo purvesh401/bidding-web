@@ -18,14 +18,17 @@ import {
 } from 'react-bootstrap';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
+import { FaHeart, FaRegHeart } from 'react-icons/fa';
 
 import { useAuthContext } from '../hooks/useAuth.js';
 import { useSocket } from '../context/SocketContext.jsx';
 import CountdownTimer from '../components/CountdownTimer.jsx';
 import BidModal from '../components/BidModal.jsx';
+import AutoBidModal from '../components/AutoBidModal.jsx';
 import ImageGallery from '../components/ImageGallery.jsx';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import BidHistoryList from '../components/BidHistoryList.jsx';
+import LiveAuctionRoom from '../components/LiveAuctionRoom.jsx';
 import api from '../services/api.js';
 import { formatCurrency, formatDateTime } from '../utils/formatters.js';
 import { priceUpdateVariants, buttonHoverVariants } from '../utils/animationVariants.js';
@@ -44,9 +47,11 @@ const ItemDetailPage = () => {
   const [bidHistory, setBidHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showBidModal, setShowBidModal] = useState(false);
+  const [showAutoBidModal, setShowAutoBidModal] = useState(false);
   const [bidAmountInput, setBidAmountInput] = useState('');
   const [isSubmittingBid, setIsSubmittingBid] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isInWatchlist, setIsInWatchlist] = useState(false);
 
   useEffect(() => {
     if (!itemId) {
@@ -146,6 +151,27 @@ const ItemDetailPage = () => {
     }
     return auctionItem.currentPrice + auctionItem.bidIncrement;
   }, [auctionItem]);
+
+  /**
+   * @function toggleWatchlist
+   * @description Adds or removes item from user's watchlist
+   * @returns {Promise<void>}
+   */
+  const toggleWatchlist = async () => {
+    if (!authUser) {
+      toast.error('Please log in to add items to watchlist.');
+      navigate('/login');
+      return;
+    }
+
+    try {
+      const response = await api.post('/watchlist/toggle', { itemId });
+      setIsInWatchlist(response.data.isInWatchlist);
+      toast.success(response.data.message);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update watchlist.');
+    }
+  };
 
   /**
    * @function handlePlaceBidClick
@@ -275,11 +301,34 @@ const ItemDetailPage = () => {
               </div>
 
               {!hasAuctionEnded && !isSeller && (
-                <motion.div variants={buttonHoverVariants} whileHover="hover" whileTap="tap" className="mb-3">
-                  <Button className="w-100 fw-bold" style={{ fontSize: '1.1rem', padding: '0.85rem' }} onClick={handlePlaceBidClick}>
-                    Place a Bid
-                  </Button>
-                </motion.div>
+                <>
+                  <motion.div variants={buttonHoverVariants} whileHover="hover" whileTap="tap" className="mb-3">
+                    <Button className="w-100 fw-bold" style={{ fontSize: '1.1rem', padding: '0.85rem' }} onClick={handlePlaceBidClick}>
+                      Place a Bid
+                    </Button>
+                  </motion.div>
+                  <motion.div variants={buttonHoverVariants} whileHover="hover" whileTap="tap" className="mb-3">
+                    <Button 
+                      variant="outline-primary" 
+                      className="w-100 fw-bold d-flex align-items-center justify-content-center gap-2" 
+                      style={{ fontSize: '1rem', padding: '0.75rem' }}
+                      onClick={() => setShowAutoBidModal(true)}
+                    >
+                      🤖 Enable Auto-Bid
+                    </Button>
+                  </motion.div>
+                  <motion.div variants={buttonHoverVariants} whileHover="hover" whileTap="tap">
+                    <Button 
+                      variant={isInWatchlist ? 'danger' : 'outline-danger'} 
+                      className="w-100 fw-bold d-flex align-items-center justify-content-center gap-2" 
+                      style={{ fontSize: '1rem', padding: '0.75rem' }}
+                      onClick={toggleWatchlist}
+                    >
+                      {isInWatchlist ? <FaHeart /> : <FaRegHeart />}
+                      {isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
+                    </Button>
+                  </motion.div>
+                </>
               )}
 
               {isSeller && (
@@ -297,6 +346,15 @@ const ItemDetailPage = () => {
           </Card>
         </Col>
       </Row>
+
+      {/* Real-time Auction Room */}
+      {!hasAuctionEnded && (
+        <Row className="mt-4">
+          <Col>
+            <LiveAuctionRoom itemId={itemId} itemTitle={auctionItem.title} />
+          </Col>
+        </Row>
+      )}
 
       <Row className="g-4 mt-1">
         <Col lg={7}>
@@ -374,6 +432,12 @@ const ItemDetailPage = () => {
         onSubmit={handleBidSubmission}
         minimumBidDisplay={minimumBid}
         isSubmitting={isSubmittingBid}
+      />
+
+      <AutoBidModal
+        show={showAutoBidModal}
+        onHide={() => setShowAutoBidModal(false)}
+        item={auctionItem}
       />
     </Container>
   );

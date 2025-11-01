@@ -17,7 +17,15 @@ import LoadingSpinner from '../components/LoadingSpinner.jsx';
 const HomePage = () => {
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filters, setFilters] = useState({ category: '', status: 'active', search: '' });
+  const [filters, setFilters] = useState({ 
+    category: '', 
+    status: 'active', 
+    search: '',
+    condition: '',
+    minPrice: '',
+    maxPrice: '',
+    sortBy: 'endingSoon'
+  });
 
   useEffect(() => {
     fetchItems();
@@ -115,8 +123,49 @@ const HomePage = () => {
                 </Form.Select>
               </Col>
               <Col md={2}>
-                <Button type="submit" className="w-100" style={{ height: 'calc(1.5em + 1.5rem + 2px)' }}>
-                  Apply
+                <Form.Select name="condition" value={filters.condition} onChange={handleFilterChange} className="form-control-lg">
+                  <option value="">Any Condition</option>
+                  <option value="Excellent">Excellent</option>
+                  <option value="Very Good">Very Good</option>
+                  <option value="Good">Good</option>
+                  <option value="Fair">Fair</option>
+                  <option value="Poor">Poor</option>
+                </Form.Select>
+              </Col>
+            </Row>
+            <Row className="g-3 mt-2">
+              <Col md={3}>
+                <Form.Control
+                  type="number"
+                  name="minPrice"
+                  placeholder="Min Price ($)"
+                  value={filters.minPrice}
+                  onChange={handleFilterChange}
+                  min="0"
+                />
+              </Col>
+              <Col md={3}>
+                <Form.Control
+                  type="number"
+                  name="maxPrice"
+                  placeholder="Max Price ($)"
+                  value={filters.maxPrice}
+                  onChange={handleFilterChange}
+                  min="0"
+                />
+              </Col>
+              <Col md={4}>
+                <Form.Select name="sortBy" value={filters.sortBy} onChange={handleFilterChange}>
+                  <option value="endingSoon">Ending Soon</option>
+                  <option value="newest">Newest First</option>
+                  <option value="priceLowToHigh">Price: Low to High</option>
+                  <option value="priceHighToLow">Price: High to Low</option>
+                  <option value="mostBids">Most Bids</option>
+                </Form.Select>
+              </Col>
+              <Col md={2}>
+                <Button type="submit" className="w-100">
+                  Apply Filters
                 </Button>
               </Col>
             </Row>

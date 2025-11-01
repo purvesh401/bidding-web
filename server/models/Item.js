@@ -129,6 +129,33 @@ const itemSchema = new Schema(
       type: Boolean,
       default: false
     },
+    isMultiUnit: {
+      type: Boolean,
+      default: false
+    },
+    totalQuantity: {
+      type: Number,
+      default: 1,
+      min: [1, 'Total quantity must be at least 1.']
+    },
+    quantityAvailable: {
+      type: Number,
+      default: 1,
+      min: [0, 'Quantity available cannot be negative.']
+    },
+    winners: [{
+      userId: {
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+      },
+      bidAmount: {
+        type: Number
+      },
+      quantity: {
+        type: Number,
+        default: 1
+      }
+    }],
     reservePrice: {
       type: Number,
       default: null,
