@@ -34,7 +34,7 @@ const ItemCard = ({ item }) => (
         {item.status === 'active' && (
           <div className="position-absolute top-0 start-0 m-2">
             <Badge bg="danger" className="shadow-sm">
-              🔥 Live
+              Live
             </Badge>
           </div>
         )}
@@ -50,20 +50,20 @@ const ItemCard = ({ item }) => (
               <span className="price-display-small">{formatCurrency(item.currentPrice)}</span>
             </div>
             <Badge bg="info" className="ms-2 fs-6 px-2 py-2">
-              💰 {item.totalBids} {item.totalBids === 1 ? 'bid' : 'bids'}
+              {item.totalBids} {item.totalBids === 1 ? 'bid' : 'bids'}
             </Badge>
           </div>
         </motion.div>
         <div className="mb-3">
-          <small className="text-muted d-flex align-items-center">
-            ⏰ Ends {formatDateTime(item.endTime)}
+            <small className="text-muted d-flex align-items-center">
+            Ends {formatDateTime(item.endTime)}
           </small>
         </div>
       </Card.Body>
       <Card.Footer className="bg-transparent border-0 pt-0">
         <motion.div variants={buttonHoverVariants} whileHover="hover" whileTap="tap">
           <Button as={Link} to={`/items/${item._id}`} variant="primary" className="w-100 fw-semibold">
-            🎯 View Auction
+            View Auction
           </Button>
         </motion.div>
       </Card.Footer>

@@ -116,7 +116,7 @@ const ProfilePage = () => {
   return (
     <div>
       <div className="mb-5">
-        <h1 className="display-6 fw-bold mb-2">👤 My Profile</h1>
+        <h1 className="display-6 fw-bold mb-2">My Profile</h1>
         <p className="text-muted lead">Manage your account information and preferences</p>
       </div>
 
@@ -161,7 +161,7 @@ const ProfilePage = () => {
 
         <Col lg={8}>
           <Card className="border-0 shadow-sm">
-            <Card.Header className="fw-bold">✏️ Edit Profile</Card.Header>
+            <Card.Header className="fw-bold">Edit Profile</Card.Header>
             <Card.Body>
               <Form onSubmit={handleSubmit(onSubmit)}>
                 <Row>
@@ -229,7 +229,7 @@ const ProfilePage = () => {
 
                 <hr className="my-4" />
 
-                <h5 className="fw-bold mb-3">📍 Address Information</h5>
+                <h5 className="fw-bold mb-3">Address Information</h5>
 
                 <Form.Group className="mb-3" controlId="profileStreet">
                   <Form.Label className="fw-semibold">Street Address</Form.Label>
@@ -299,7 +299,7 @@ const ProfilePage = () => {
                   </Button>
                   <motion.div variants={buttonHoverVariants} whileHover="hover" whileTap="tap">
                     <Button type="submit" variant="primary" disabled={isSaving}>
-                      {isSaving ? '⏳ Saving...' : '✅ Save Changes'}
+                      {isSaving ? 'Saving...' : 'Save Changes'}
                     </Button>
                   </motion.div>
                 </div>

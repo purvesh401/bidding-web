@@ -8,7 +8,8 @@ import { Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { Container, Navbar, Nav, Button } from 'react-bootstrap';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import HomePage from './pages/HomePage.jsx';
+import LandingPage from './pages/LandingPage.jsx';
+import AuctionsPage from './pages/AuctionsPage.jsx';
 import ItemDetailPage from './pages/ItemDetailPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
@@ -34,12 +35,13 @@ const App = () => {
       <Navbar bg="light" expand="lg" className="shadow-sm mb-4">
         <Container>
           <Navbar.Brand as={Link} to="/" className="fw-bold">
-            🎯 Antique Auction
+            Antique Auction
           </Navbar.Brand>
           <Navbar.Toggle aria-controls="main-navbar" />
           <Navbar.Collapse id="main-navbar" className="justify-content-end">
             <Nav className="align-items-center gap-2">
               <Nav.Link as={Link} to="/" className="fw-semibold">Home</Nav.Link>
+              <Nav.Link as={Link} to="/auctions" className="fw-semibold">Auctions</Nav.Link>
               {authUser && (
                 <>
                   <Nav.Link as={Link} to="/dashboard" className="fw-semibold">Dashboard</Nav.Link>
@@ -73,7 +75,15 @@ const App = () => {
               path="/"
               element={(
                 <motion.div variants={pageTransitionVariants} initial="hidden" animate="visible" exit="exit">
-                  <HomePage />
+                  <LandingPage />
+                </motion.div>
+              )}
+            />
+            <Route
+              path="/auctions"
+              element={(
+                <motion.div variants={pageTransitionVariants} initial="hidden" animate="visible" exit="exit">
+                  <AuctionsPage />
                 </motion.div>
               )}
             />

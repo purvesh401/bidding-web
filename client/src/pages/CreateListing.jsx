@@ -21,6 +21,7 @@ const CreateListing = () => {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting }
   } = useForm({
     defaultValues: {
@@ -30,6 +31,7 @@ const CreateListing = () => {
       images: '',
       startingPrice: 100,
       bidIncrement: 10,
+      startTime: '',
       endTime: '',
       condition: 'Excellent',
       reservePrice: '',
@@ -49,18 +51,24 @@ const CreateListing = () => {
    */
   const [selectedFiles, setSelectedFiles] = useState([]);
 
+  const selectedCategory = watch('category');
+
   const onSubmit = async (formData) => {
     const form = new FormData();
     form.append('title', formData.title);
     form.append('description', formData.description);
-    form.append('category', formData.category);
+    const categoryValue = formData.category === 'Other' && formData.customCategory
+      ? String(formData.customCategory).trim()
+      : formData.category;
+    form.append('category', categoryValue);
+    if (formData.startTime) form.append('startTime', formData.startTime);
     const urlList = formData.images
       ? formData.images.split(',').map((u) => u.trim()).filter(Boolean)
       : [];
     urlList.forEach((u) => form.append('images', u));
     form.append('startingPrice', String(Number(formData.startingPrice)));
     form.append('bidIncrement', String(Number(formData.bidIncrement)));
-    if (formData.endTime) form.append('endTime', formData.endTime);
+  if (formData.endTime) form.append('endTime', formData.endTime);
     form.append('condition', formData.condition);
     if (formData.reservePrice) form.append('reservePrice', String(Number(formData.reservePrice)));
     if (formData.dimensionsHeight) form.append('dimensions[height]', String(Number(formData.dimensionsHeight)));
@@ -120,6 +128,20 @@ const CreateListing = () => {
                 </Form.Select>
               </Form.Group>
             </Col>
+            {selectedCategory === 'Other' && (
+              <Col md={6}>
+                <Form.Group controlId="listingCustomCategory">
+                  <Form.Label>Specify category</Form.Label>
+                  <Form.Control
+                    type="text"
+                    placeholder="Enter category name"
+                    {...register('customCategory', { required: 'Please enter a category name.' })}
+                    isInvalid={Boolean(errors.customCategory)}
+                  />
+                  <Form.Control.Feedback type="invalid">{errors.customCategory?.message}</Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            )}
             <Col xs={12}>
               <Form.Group controlId="listingDescription">
                 <Form.Label>Description</Form.Label>
@@ -180,11 +202,32 @@ const CreateListing = () => {
               </Form.Group>
             </Col>
             <Col md={6}>
+              <Form.Group controlId="listingStartTime">
+                <Form.Label>Start Time (optional)</Form.Label>
+                <Form.Control
+                  type="datetime-local"
+                  {...register('startTime')}
+                  isInvalid={Boolean(errors.startTime)}
+                />
+                <Form.Control.Feedback type="invalid">{errors.startTime?.message}</Form.Control.Feedback>
+              </Form.Group>
+            </Col>
+
+            <Col md={6}>
               <Form.Group controlId="listingEndTime">
                 <Form.Label>End Time</Form.Label>
                 <Form.Control
                   type="datetime-local"
-                  {...register('endTime', { required: 'End time is required.' })}
+                  {...register('endTime', {
+                    required: 'End time is required.',
+                    validate: (value) => {
+                      const start = watch('startTime');
+                      if (start && value && new Date(value) <= new Date(start)) {
+                        return 'End time must be after the start time.';
+                      }
+                      return true;
+                    }
+                  })}
                   isInvalid={Boolean(errors.endTime)}
                 />
                 <Form.Control.Feedback type="invalid">{errors.endTime?.message}</Form.Control.Feedback>

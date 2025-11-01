@@ -30,30 +30,13 @@ export const SocketContextProvider = ({ children }) => {
   const { authUser, isLoading } = useAuthContext();
 
   useEffect(() => {
-    // TEMPORARY FIX: Disable socket completely to stop the connection loop
-    console.log('🚫 Socket connection disabled to prevent connection loops');
-    return;
-
-    // TODO: Re-enable socket after fixing authentication issues
-    /*
-    // Only connect socket if user is authenticated
-    if (!authUser || isLoading) {
-      // Disconnect if user is not authenticated
-      if (socket) {
-        console.log('🧹 Disconnecting socket - user not authenticated');
-        socket.disconnect();
-        setSocket(null);
-        setIsConnected(false);
-      }
+    // Don't connect if still loading auth state
+    if (isLoading) {
       return;
     }
 
-    // Don't create a new connection if one already exists
-    if (socket && socket.connected) {
-      return;
-    }
-
-    console.log('🔌 Initializing socket connection for authenticated user');
+    // Connect socket (now works for both authenticated and guest users)
+    console.log('Initializing socket connection');
     const socketUrl = import.meta.env.VITE_SERVER_URL ?? 'http://localhost:5000';
     const socketInstance = io(socketUrl, {
       withCredentials: true,
@@ -67,38 +50,38 @@ export const SocketContextProvider = ({ children }) => {
 
     // Connection event handlers
     socketInstance.on('connect', () => {
-      console.log('✅ Socket connected:', socketInstance.id);
+      console.log('Socket connected:', socketInstance.id);
       setIsConnected(true);
     });
 
     socketInstance.on('disconnect', (reason) => {
-      console.log('❌ Socket disconnected:', reason);
+      console.log('Socket disconnected:', reason);
       setIsConnected(false);
     });
 
     socketInstance.on('connect_error', (error) => {
-      console.error('🔥 Socket connection error:', error.message);
+      console.error('Socket connection error:', error.message);
       setIsConnected(false);
     });
 
     socketInstance.on('reconnect', (attemptNumber) => {
-      console.log('🔄 Socket reconnected after', attemptNumber, 'attempts');
+      console.log('Socket reconnected after', attemptNumber, 'attempts');
       setIsConnected(true);
     });
 
     socketInstance.on('reconnect_error', (error) => {
-      console.error('🔥 Socket reconnection error:', error.message);
+      console.error('Socket reconnection error:', error.message);
     });
 
     socketInstance.on('reconnect_failed', () => {
-      console.error('💥 Socket reconnection failed after all attempts');
+      console.error('Socket reconnection failed after all attempts');
       setIsConnected(false);
     });
 
     setSocket(socketInstance);
 
     return () => {
-      console.log('🧹 Cleaning up socket connection');
+      console.log('Cleaning up socket connection');
       socketInstance.off('connect');
       socketInstance.off('disconnect');
       socketInstance.off('connect_error');
@@ -107,8 +90,7 @@ export const SocketContextProvider = ({ children }) => {
       socketInstance.off('reconnect_failed');
       socketInstance.disconnect();
     };
-    */
-  }, [authUser, isLoading]); // Re-run when auth state changes
+  }, [isLoading]); // Only re-run when loading state changes
 
   const contextValue = {
     socket,

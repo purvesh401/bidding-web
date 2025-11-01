@@ -41,20 +41,8 @@ const itemSchema = new Schema(
     category: {
       type: String,
       required: [true, 'Item category is required.'],
-      enum: [
-        'Furniture',
-        'Jewelry',
-        'Art',
-        'Collectibles',
-        'Vintage Electronics',
-        'Antique Books',
-        'Pottery',
-        'Watches',
-        'Sculptures',
-        'Textiles',
-        'Musical Instruments',
-        'Other'
-      ]
+      trim: true,
+      maxlength: [100, 'Category cannot exceed 100 characters.']
     },
     images: {
       type: [String],
