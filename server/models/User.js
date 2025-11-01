@@ -23,7 +23,7 @@ const { Schema } = mongoose;
  * @property {string} username - Unique username selected by the user.
  * @property {string} email - Unique email used for authentication.
  * @property {string} password - Hashed password (never stored in plain text).
- * @property {'buyer'|'seller'|'both'} role - Role used to control available features.
+ * @property {string} role - User role (defaults to 'user').
  * @property {string} phoneNumber - Optional contact number.
  * @property {Address} address - Structured address information.
  * @property {string|null} profileImage - Optional profile image URL.
@@ -68,9 +68,8 @@ const userSchema = new Schema(
     },
     role: {
       type: String,
-      enum: ['buyer', 'seller', 'both'],
-      default: 'buyer',
-      required: true
+      default: 'user',
+      required: false
     },
     phoneNumber: {
       type: String,

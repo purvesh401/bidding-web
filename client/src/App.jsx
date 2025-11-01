@@ -14,6 +14,7 @@ import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
 import CreateListing from './pages/CreateListing.jsx';
+import ProfilePage from './pages/ProfilePage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import { useAuthContext } from './hooks/useAuth.js';
@@ -30,21 +31,24 @@ const App = () => {
 
   return (
     <div className="d-flex flex-column min-vh-100">
-      <Navbar bg="light" expand="lg" className="shadow-sm">
+      <Navbar bg="light" expand="lg" className="shadow-sm mb-4">
         <Container>
-          <Navbar.Brand as={Link} to="/">
-            Antique Auction
+          <Navbar.Brand as={Link} to="/" className="fw-bold">
+            🎯 Antique Auction
           </Navbar.Brand>
           <Navbar.Toggle aria-controls="main-navbar" />
           <Navbar.Collapse id="main-navbar" className="justify-content-end">
             <Nav className="align-items-center gap-2">
-              <Nav.Link as={Link} to="/">Home</Nav.Link>
-              <Nav.Link as={Link} to="/dashboard">Dashboard</Nav.Link>
-              {['seller', 'both'].includes(authUser?.role) && (
-                <Nav.Link as={Link} to="/create-listing">Create Listing</Nav.Link>
+              <Nav.Link as={Link} to="/" className="fw-semibold">Home</Nav.Link>
+              {authUser && (
+                <>
+                  <Nav.Link as={Link} to="/dashboard" className="fw-semibold">Dashboard</Nav.Link>
+                  <Nav.Link as={Link} to="/create-listing" className="fw-semibold">Create Listing</Nav.Link>
+                  <Nav.Link as={Link} to="/profile" className="fw-semibold">Profile</Nav.Link>
+                </>
               )}
               {authUser ? (
-                <Button variant="outline-danger" onClick={logout} size="sm">
+                <Button variant="outline-danger" onClick={logout} size="sm" className="ms-2">
                   Logout
                 </Button>
               ) : (
@@ -102,9 +106,19 @@ const App = () => {
             <Route
               path="/create-listing"
               element={(
-                <ProtectedRoute requireSeller>
+                <ProtectedRoute>
                   <motion.div variants={pageTransitionVariants} initial="hidden" animate="visible" exit="exit">
                     <CreateListing />
+                  </motion.div>
+                </ProtectedRoute>
+              )}
+            />
+            <Route
+              path="/profile"
+              element={(
+                <ProtectedRoute>
+                  <motion.div variants={pageTransitionVariants} initial="hidden" animate="visible" exit="exit">
+                    <ProfilePage />
                   </motion.div>
                 </ProtectedRoute>
               )}

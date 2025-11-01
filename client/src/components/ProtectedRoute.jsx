@@ -11,10 +11,10 @@ import { useAuthContext } from '../hooks/useAuth.js';
 
 /**
  * @component ProtectedRoute
- * @param {{ children: React.ReactNode, requireSeller?: boolean }} props - Component props.
+ * @param {{ children: React.ReactNode }} props - Component props.
  * @returns {JSX.Element}
  */
-const ProtectedRoute = ({ children, requireSeller = false }) => {
+const ProtectedRoute = ({ children }) => {
   const { authUser, isLoading } = useAuthContext();
   const location = useLocation();
 
@@ -30,10 +30,6 @@ const ProtectedRoute = ({ children, requireSeller = false }) => {
 
   if (!authUser) {
     return <Navigate to="/login" replace state={{ from: location }} />;
-  }
-
-  if (requireSeller && !['seller', 'both'].includes(authUser.role)) {
-    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;

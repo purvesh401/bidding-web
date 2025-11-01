@@ -43,29 +43,31 @@ const DashboardPage = () => {
 
   return (
     <div>
-      <h1 className="h3 mb-4">Welcome back, {authUser.username}</h1>
+      <div className="mb-5">
+        <h1 className="display-6 fw-bold mb-2">👋 Welcome back, {authUser.username}!</h1>
+        <p className="text-muted lead">Here's your auction dashboard</p>
+      </div>
       <Row className="g-4">
         <Col lg={4}>
-          <Card>
-            <Card.Header>Account Overview</Card.Header>
+          <Card className="border-0 shadow-sm h-100">
+            <Card.Header className="fw-bold">📊 Account Overview</Card.Header>
             <Card.Body>
               <ListGroup variant="flush">
-                <ListGroup.Item>
-                  <strong>Email:</strong> {authUser.email}
+                <ListGroup.Item className="d-flex justify-content-between align-items-center">
+                  <span className="fw-semibold">📧 Email:</span>
+                  <span className="text-muted">{authUser.email}</span>
                 </ListGroup.Item>
-                <ListGroup.Item>
-                  <strong>Role:</strong> <Badge bg="primary">{authUser.role}</Badge>
-                </ListGroup.Item>
-                <ListGroup.Item>
-                  <strong>Last Login:</strong> {authUser.lastLogin ? formatDateTime(authUser.lastLogin) : 'Not recorded'}
+                <ListGroup.Item className="d-flex justify-content-between align-items-center">
+                  <span className="fw-semibold">🕐 Last Login:</span>
+                  <span className="text-muted small">{authUser.lastLogin ? formatDateTime(authUser.lastLogin) : 'Not recorded'}</span>
                 </ListGroup.Item>
               </ListGroup>
             </Card.Body>
           </Card>
         </Col>
         <Col lg={8}>
-          <Card>
-            <Card.Header>Live Auctions</Card.Header>
+          <Card className="border-0 shadow-sm">
+            <Card.Header className="fw-bold">🔥 Live Auctions</Card.Header>
             <Card.Body>
               {isLoading ? (
                 <div className="d-flex justify-content-center py-3">
@@ -87,42 +89,46 @@ const DashboardPage = () => {
                   ))}
                 </ListGroup>
               ) : (
-                <div className="text-muted">No active auctions at the moment.</div>
+                <div className="empty-state">
+                  <div className="empty-state-icon">🔥</div>
+                  <p className="text-muted mb-0">No active auctions at the moment.</p>
+                </div>
               )}
             </Card.Body>
           </Card>
         </Col>
       </Row>
 
-      {['seller', 'both'].includes(authUser.role) && (
-        <Card className="mt-4">
-          <Card.Header>My Listings</Card.Header>
-          <Card.Body>
-            {isLoading ? (
-              <div className="d-flex justify-content-center py-3">
-                <LoadingSpinner />
-              </div>
-            ) : myListings.length ? (
-              <ListGroup>
-                {myListings.map((item) => (
-                  <ListGroup.Item key={item._id} className="d-flex justify-content-between align-items-center">
-                    <div>
-                      <Link to={`/items/${item._id}`}>{item.title}</Link>
-                      <div className="text-muted small">Status: {item.status}</div>
-                    </div>
-                    <div className="text-end">
-                      <div>{formatCurrency(item.currentPrice)}</div>
-                      <div className="text-muted small">{item.totalBids} bids</div>
-                    </div>
-                  </ListGroup.Item>
-                ))}
-              </ListGroup>
-            ) : (
-              <div className="text-muted">You have not created any listings yet.</div>
-            )}
-          </Card.Body>
-        </Card>
-      )}
+      <Card className="mt-4 border-0 shadow-sm">
+        <Card.Header className="fw-bold">📦 My Listings</Card.Header>
+        <Card.Body>
+          {isLoading ? (
+            <div className="d-flex justify-content-center py-3">
+              <LoadingSpinner />
+            </div>
+          ) : myListings.length ? (
+            <ListGroup>
+              {myListings.map((item) => (
+                <ListGroup.Item key={item._id} className="d-flex justify-content-between align-items-center">
+                  <div>
+                    <Link to={`/items/${item._id}`}>{item.title}</Link>
+                    <div className="text-muted small">Status: {item.status}</div>
+                  </div>
+                  <div className="text-end">
+                    <div>{formatCurrency(item.currentPrice)}</div>
+                    <div className="text-muted small">{item.totalBids} bids</div>
+                  </div>
+                </ListGroup.Item>
+              ))}
+            </ListGroup>
+          ) : (
+            <div className="empty-state">
+              <div className="empty-state-icon">📦</div>
+              <p className="text-muted mb-0">You have not created any listings yet.</p>
+            </div>
+          )}
+        </Card.Body>
+      </Card>
     </div>
   );
 };

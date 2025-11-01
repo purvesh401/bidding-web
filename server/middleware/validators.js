@@ -44,10 +44,6 @@ export const validateUserRegistration = [
   body('password')
     .isLength({ min: 4 })
     .withMessage('Password must be at least 4 characters long.'),
-  body('role')
-    .optional()
-    .isIn(['buyer', 'seller', 'both'])
-    .withMessage('Role must be buyer, seller, or both.'),
   validateRequest
 ];
 

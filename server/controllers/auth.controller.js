@@ -17,7 +17,7 @@ import generateTokenAndSetCookie from '../utils/generateToken.js';
  */
 export const registerUser = async (req, res) => {
   try {
-    const { username, email, password, role, phoneNumber, address } = req.body;
+    const { username, email, password, phoneNumber, address } = req.body;
 
     // Demo-friendly behavior: if the email already exists, treat this as a login
     // instead of failing registration. This removes friction in first-time demos.
@@ -42,7 +42,7 @@ export const registerUser = async (req, res) => {
       username: finalUsername,
       email,
       password,
-      role: role || 'buyer',
+      role: 'user',
       phoneNumber,
       address
     });
@@ -131,4 +131,69 @@ export const getCurrentUser = async (req, res) => {
   }
 
   res.status(200).json({ user: req.user });
+};
+
+/**
+ * @function updateUserProfile
+ * @description Updates the authenticated user's profile information. Requires protectRoute middleware.
+ * @param {import('express').Request} req - Express request object containing update data.
+ * @param {import('express').Response} res - Express response object used to send the response.
+ * @returns {Promise<void>}
+ */
+export const updateUserProfile = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Authentication required.' });
+    }
+
+    const { username, email, phoneNumber, address, profileImage } = req.body;
+
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    // Check if username is being changed and if it's already taken
+    if (username && username !== user.username) {
+      const usernameExists = await User.findOne({ username, _id: { $ne: user._id } });
+      if (usernameExists) {
+        return res.status(400).json({ message: 'Username is already taken.' });
+      }
+      user.username = username;
+    }
+
+    // Check if email is being changed and if it's already taken
+    if (email && email !== user.email) {
+      const emailExists = await User.findOne({ email, _id: { $ne: user._id } });
+      if (emailExists) {
+        return res.status(400).json({ message: 'Email is already in use.' });
+      }
+      user.email = email;
+    }
+
+    if (phoneNumber !== undefined) {
+      user.phoneNumber = phoneNumber || null;
+    }
+
+    if (address !== undefined) {
+      user.address = address || null;
+    }
+
+    if (profileImage !== undefined) {
+      user.profileImage = profileImage || null;
+    }
+
+    await user.save();
+
+    const { password: _password, ...userWithoutPassword } = user.toObject();
+
+    res.status(200).json({
+      message: 'Profile updated successfully.',
+      user: userWithoutPassword
+    });
+  } catch (updateError) {
+    console.error('Error updating user profile:', updateError);
+    res.status(500).json({ message: 'Server error while updating profile.' });
+  }
 };

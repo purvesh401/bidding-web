@@ -227,55 +227,70 @@ const ItemDetailPage = () => {
           <ImageGallery images={auctionItem.images} title={auctionItem.title} />
         </Col>
         <Col lg={5}>
-          <Card className="h-100">
-            <Card.Body>
-              <div className="d-flex justify-content-between align-items-start mb-2">
-                <div>
-                  <Card.Title>{auctionItem.title}</Card.Title>
-                  <Badge bg="secondary" className="me-2">
-                    {auctionItem.category}
-                  </Badge>
-                  <Badge bg="info">{auctionItem.condition}</Badge>
+          <Card className="h-100 border-0 shadow-lg">
+            <Card.Body className="p-4">
+              <div className="d-flex justify-content-between align-items-start mb-3">
+                <div className="flex-grow-1">
+                  <Card.Title className="fw-bold mb-3" style={{ fontSize: '1.75rem' }}>{auctionItem.title}</Card.Title>
+                  <div className="d-flex gap-2 flex-wrap mb-3">
+                    <Badge bg="secondary" className="px-3 py-2 fs-6">
+                      📂 {auctionItem.category}
+                    </Badge>
+                    <Badge bg="info" className="px-3 py-2 fs-6">
+                      {auctionItem.condition}
+                    </Badge>
+                    {hasAuctionEnded && (
+                      <Badge bg="dark" className="px-3 py-2 fs-6">
+                        ✅ Auction Ended
+                      </Badge>
+                    )}
+                  </div>
                 </div>
-                {hasAuctionEnded && <Badge bg="dark">Auction Ended</Badge>}
               </div>
 
-              <Card.Text>{auctionItem.description}</Card.Text>
+              <Card.Text className="mb-4" style={{ fontSize: '1rem', lineHeight: '1.8', color: 'var(--text-secondary)' }}>
+                {auctionItem.description}
+              </Card.Text>
 
-              <motion.div variants={priceUpdateVariants} initial="initial" animate="animate" className="mb-3">
-                <h2 className="price-display">{formatCurrency(auctionItem.currentPrice)}</h2>
-                <div className="text-muted small">Current Price</div>
+              <motion.div variants={priceUpdateVariants} initial="initial" animate="animate" className="mb-4 p-4 rounded" style={{ background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)' }}>
+                <div className="text-muted small mb-1 fw-semibold">Current Price</div>
+                <h2 className="price-display mb-0">{formatCurrency(auctionItem.currentPrice)}</h2>
               </motion.div>
 
-              <div className="mb-3">
-                <strong>Total Bids:</strong> {auctionItem.totalBids}
+              <div className="mb-3 p-3 rounded d-flex justify-content-between align-items-center" style={{ background: 'var(--background-gradient)' }}>
+                <span className="fw-semibold">💰 Total Bids:</span>
+                <Badge bg="primary" className="fs-6 px-3 py-2">
+                  {auctionItem.totalBids} {auctionItem.totalBids === 1 ? 'bid' : 'bids'}
+                </Badge>
               </div>
 
-              <div className="mb-3">
-                <strong>Bid Increment:</strong> {formatCurrency(auctionItem.bidIncrement)}
+              <div className="mb-3 p-3 rounded d-flex justify-content-between align-items-center" style={{ background: 'var(--background-gradient)' }}>
+                <span className="fw-semibold">📈 Bid Increment:</span>
+                <span className="fw-bold" style={{ color: 'var(--success-color)' }}>{formatCurrency(auctionItem.bidIncrement)}</span>
               </div>
 
-              <div className="mb-3">
+              <div className="mb-4 p-3 rounded d-flex justify-content-between align-items-center" style={{ background: 'var(--background-gradient)' }}>
+                <span className="fw-semibold">⏰ Time Remaining:</span>
                 <CountdownTimer endTime={auctionItem.endTime} onAuctionEnd={() => toast.info('Auction ended.')} />
               </div>
 
               {!hasAuctionEnded && !isSeller && (
-                <motion.div variants={buttonHoverVariants} whileHover="hover" whileTap="tap">
-                  <Button className="w-100" onClick={handlePlaceBidClick}>
-                    Place a Bid
+                <motion.div variants={buttonHoverVariants} whileHover="hover" whileTap="tap" className="mb-3">
+                  <Button className="w-100 fw-bold" style={{ fontSize: '1.1rem', padding: '0.85rem' }} onClick={handlePlaceBidClick}>
+                    💰 Place a Bid
                   </Button>
                 </motion.div>
               )}
 
               {isSeller && (
-                <Alert variant="info" className="mt-3">
-                  Sellers cannot place bids on their own items.
+                <Alert variant="info" className="mt-3 mb-0">
+                  <strong>ℹ️ Note:</strong> Sellers cannot place bids on their own items.
                 </Alert>
               )}
 
               {hasAuctionEnded && auctionItem.winnerId && (
-                <Alert variant="success" className="mt-3">
-                  Auction won by bidder ID {auctionItem.winnerId} at {formatCurrency(auctionItem.currentPrice)}
+                <Alert variant="success" className="mt-3 mb-0">
+                  <strong>🎉 Winner!</strong> Auction won by bidder ID {auctionItem.winnerId} at {formatCurrency(auctionItem.currentPrice)}
                 </Alert>
               )}
             </Card.Body>
@@ -285,42 +300,46 @@ const ItemDetailPage = () => {
 
       <Row className="g-4 mt-1">
         <Col lg={7}>
-          <Card>
-            <Card.Header>Bid History</Card.Header>
+          <Card className="border-0 shadow-sm">
+            <Card.Header className="fw-bold fs-5">📜 Bid History</Card.Header>
             <Card.Body>
               <BidHistoryList bids={bidHistory} />
             </Card.Body>
           </Card>
         </Col>
         <Col lg={5}>
-          <Card>
-            <Card.Header>Item Details</Card.Header>
+          <Card className="border-0 shadow-sm">
+            <Card.Header className="fw-bold fs-5">📋 Item Details</Card.Header>
             <Card.Body>
               <Table borderless size="sm" className="mb-0">
                 <tbody>
                   <tr>
-                    <th scope="row">Seller</th>
-                    <td>{auctionItem.sellerId?.username || 'Unknown'}</td>
+                    <th scope="row" className="fw-semibold">👤 Seller</th>
+                    <td>
+                      <Badge bg="secondary">{auctionItem.sellerId?.username || 'Unknown'}</Badge>
+                    </td>
                   </tr>
                   <tr>
-                    <th scope="row">Starting Price</th>
-                    <td>{formatCurrency(auctionItem.startingPrice)}</td>
+                    <th scope="row" className="fw-semibold">💵 Starting Price</th>
+                    <td className="fw-bold" style={{ color: 'var(--success-color)' }}>{formatCurrency(auctionItem.startingPrice)}</td>
                   </tr>
                   <tr>
-                    <th scope="row">Reserve Price</th>
-                    <td>{auctionItem.reservePrice ? formatCurrency(auctionItem.reservePrice) : 'Not Set'}</td>
+                    <th scope="row" className="fw-semibold">🔒 Reserve Price</th>
+                    <td>{auctionItem.reservePrice ? <span className="fw-bold" style={{ color: 'var(--warning-color)' }}>{formatCurrency(auctionItem.reservePrice)}</span> : <span className="text-muted">Not Set</span>}</td>
                   </tr>
                   <tr>
-                    <th scope="row">Start Time</th>
+                    <th scope="row" className="fw-semibold">🕐 Start Time</th>
                     <td>{formatDateTime(auctionItem.startTime)}</td>
                   </tr>
                   <tr>
-                    <th scope="row">End Time</th>
+                    <th scope="row" className="fw-semibold">🕐 End Time</th>
                     <td>{formatDateTime(auctionItem.endTime)}</td>
                   </tr>
                   <tr>
-                    <th scope="row">Views</th>
-                    <td>{auctionItem.viewCount}</td>
+                    <th scope="row" className="fw-semibold">👁️ Views</th>
+                    <td>
+                      <Badge bg="info">{auctionItem.viewCount}</Badge>
+                    </td>
                   </tr>
                 </tbody>
               </Table>
