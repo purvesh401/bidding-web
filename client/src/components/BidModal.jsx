@@ -34,11 +34,17 @@ const BidModal = ({
   <Modal show={show} onHide={onHide} centered>
     <Form onSubmit={onSubmit}>
       <Modal.Header closeButton>
-        <Modal.Title>Place Your Bid</Modal.Title>
+        <Modal.Title className="fw-bold">💰 Place Your Bid</Modal.Title>
       </Modal.Header>
       <Modal.Body>
+        <div className="mb-3 p-3 rounded" style={{ background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)' }}>
+          <div className="text-muted small mb-1">Minimum Bid Required</div>
+          <div className="fw-bold fs-4" style={{ color: 'var(--success-color)' }}>
+            {formatCurrency(minimumBidDisplay)}
+          </div>
+        </div>
         <Form.Group controlId="bidAmount">
-          <Form.Label>Bid Amount (minimum {formatCurrency(minimumBidDisplay)})</Form.Label>
+          <Form.Label className="fw-semibold">Your Bid Amount</Form.Label>
           <Form.Control
             type="number"
             step="0.01"
@@ -46,7 +52,12 @@ const BidModal = ({
             value={bidAmount}
             onChange={(event) => onBidAmountChange(event.target.value)}
             required
+            className="form-control-lg"
+            placeholder={formatCurrency(minimumBidDisplay)}
           />
+          <Form.Text className="text-muted">
+            💡 You must bid at least {formatCurrency(minimumBidDisplay)} or higher
+          </Form.Text>
         </Form.Group>
       </Modal.Body>
       <Modal.Footer>
@@ -54,8 +65,8 @@ const BidModal = ({
           Cancel
         </Button>
         <motion.div variants={buttonHoverVariants} whileHover="hover" whileTap="tap">
-          <Button type="submit" variant="primary" disabled={isSubmitting}>
-            {isSubmitting ? 'Submitting…' : 'Place Bid'}
+          <Button type="submit" variant="primary" disabled={isSubmitting} className="fw-bold">
+            {isSubmitting ? '⏳ Submitting…' : '✅ Place Bid'}
           </Button>
         </motion.div>
       </Modal.Footer>

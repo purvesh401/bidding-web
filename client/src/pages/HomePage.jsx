@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Row, Col, Form, Button, Badge } from 'react-bootstrap';
+import { Row, Col, Form, Button, Badge, Card } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 import api from '../services/api.js';
 import ItemCard from '../components/ItemCard.jsx';
@@ -66,56 +66,63 @@ const HomePage = () => {
 
   return (
     <div>
-      <div className="d-flex justify-content-between align-items-center mb-4">
+      <div className="d-flex justify-content-between align-items-center mb-5">
         <div>
-          <h1 className="h3 mb-1">Live Antique Auctions</h1>
-          <p className="text-muted mb-0">Bid in real time on rare antiques and collectibles.</p>
+          <h1 className="display-5 fw-bold mb-2">🏛️ Live Antique Auctions</h1>
+          <p className="lead text-secondary mb-0">Bid in real time on rare antiques and collectibles</p>
         </div>
-        <Badge bg="primary">Real-Time Updates</Badge>
+        <Badge bg="primary" className="fs-6 px-3 py-2">
+          ⚡ Real-Time Updates
+        </Badge>
       </div>
 
-      <Form className="mb-4" onSubmit={handleFilterSubmit}>
-        <Row className="g-2">
-          <Col md={4}>
-            <Form.Control
-              type="search"
-              name="search"
-              placeholder="Search by title"
-              value={filters.search}
-              onChange={handleFilterChange}
-            />
-          </Col>
-          <Col md={3}>
-            <Form.Select name="category" value={filters.category} onChange={handleFilterChange}>
-              <option value="">All Categories</option>
-              <option value="Furniture">Furniture</option>
-              <option value="Jewelry">Jewelry</option>
-              <option value="Art">Art</option>
-              <option value="Collectibles">Collectibles</option>
-              <option value="Vintage Electronics">Vintage Electronics</option>
-              <option value="Antique Books">Antique Books</option>
-              <option value="Pottery">Pottery</option>
-              <option value="Watches">Watches</option>
-              <option value="Sculptures">Sculptures</option>
-              <option value="Textiles">Textiles</option>
-              <option value="Musical Instruments">Musical Instruments</option>
-              <option value="Other">Other</option>
-            </Form.Select>
-          </Col>
-          <Col md={3}>
-            <Form.Select name="status" value={filters.status} onChange={handleFilterChange}>
-              <option value="active">Active</option>
-              <option value="upcoming">Upcoming</option>
-              <option value="ended">Ended</option>
-            </Form.Select>
-          </Col>
-          <Col md={2}>
-            <Button type="submit" className="w-100">
-              Apply
-            </Button>
-          </Col>
-        </Row>
-      </Form>
+      <Card className="mb-4 border-0 shadow-sm">
+        <Card.Body>
+          <Form onSubmit={handleFilterSubmit}>
+            <Row className="g-3">
+              <Col md={4}>
+                <Form.Control
+                  type="search"
+                  name="search"
+                  placeholder="🔍 Search by title..."
+                  value={filters.search}
+                  onChange={handleFilterChange}
+                  className="form-control-lg"
+                />
+              </Col>
+              <Col md={3}>
+                <Form.Select name="category" value={filters.category} onChange={handleFilterChange} className="form-control-lg">
+                  <option value="">📂 All Categories</option>
+                  <option value="Furniture">🪑 Furniture</option>
+                  <option value="Jewelry">💎 Jewelry</option>
+                  <option value="Art">🎨 Art</option>
+                  <option value="Collectibles">🏺 Collectibles</option>
+                  <option value="Vintage Electronics">📻 Vintage Electronics</option>
+                  <option value="Antique Books">📚 Antique Books</option>
+                  <option value="Pottery">🏺 Pottery</option>
+                  <option value="Watches">⌚ Watches</option>
+                  <option value="Sculptures">🗿 Sculptures</option>
+                  <option value="Textiles">🧵 Textiles</option>
+                  <option value="Musical Instruments">🎵 Musical Instruments</option>
+                  <option value="Other">📦 Other</option>
+                </Form.Select>
+              </Col>
+              <Col md={3}>
+                <Form.Select name="status" value={filters.status} onChange={handleFilterChange} className="form-control-lg">
+                  <option value="active">🔥 Active</option>
+                  <option value="upcoming">⏰ Upcoming</option>
+                  <option value="ended">✅ Ended</option>
+                </Form.Select>
+              </Col>
+              <Col md={2}>
+                <Button type="submit" className="w-100" style={{ height: 'calc(1.5em + 1.5rem + 2px)' }}>
+                  Apply
+                </Button>
+              </Col>
+            </Row>
+          </Form>
+        </Card.Body>
+      </Card>
 
       {isLoading ? (
         <div className="d-flex justify-content-center py-5">
@@ -129,8 +136,12 @@ const HomePage = () => {
             </Col>
           ))}
           {!items.length && (
-            <Col>
-              <div className="text-center py-5 text-muted">No items match the selected filters.</div>
+            <Col xs={12}>
+              <div className="empty-state">
+                <div className="empty-state-icon">🔍</div>
+                <h3 className="fw-bold mb-2">No items found</h3>
+                <p className="text-muted">No items match the selected filters. Try adjusting your search criteria.</p>
+              </div>
             </Col>
           )}
         </Row>

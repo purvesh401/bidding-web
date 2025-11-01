@@ -41,9 +41,12 @@ const LoginPage = () => {
 
   return (
     <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '70vh' }}>
-      <Card className="w-100" style={{ maxWidth: '420px' }}>
-        <Card.Body>
-          <Card.Title className="mb-3 text-center">Login to Continue</Card.Title>
+      <Card className="w-100 border-0 shadow-lg" style={{ maxWidth: '450px' }}>
+        <Card.Body className="p-4">
+          <div className="text-center mb-4">
+            <h2 className="fw-bold mb-2">🔐 Welcome Back!</h2>
+            <p className="text-muted">Login to continue bidding</p>
+          </div>
           <Form onSubmit={handleSubmit(onSubmit)}>
             <Form.Group className="mb-3" controlId="loginEmail">
               <Form.Label>Email address</Form.Label>

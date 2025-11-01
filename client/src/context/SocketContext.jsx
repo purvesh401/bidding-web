@@ -1,7 +1,3 @@
-/**
- * @file SocketContext.jsx
- * @description Provides a singleton Socket.io client instance to the entire React app.
- */
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io } from 'socket.io-client';

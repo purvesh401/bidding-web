@@ -23,13 +23,13 @@ const RegisterPage = () => {
     handleSubmit,
     formState: { errors, isSubmitting }
   } = useForm({
-    defaultValues: { username: '', email: '', password: '', role: 'buyer' }
+    defaultValues: { username: '', email: '', password: '' }
   });
 
   /**
    * @function onSubmit
    * @description Sends registration payload to the backend and logs the user in on success.
-   * @param {{ username: string, email: string, password: string, role: string }} data - Form values.
+   * @param {{ username: string, email: string, password: string }} data - Form values.
    * @returns {Promise<void>}
    */
   const onSubmit = async (data) => {
@@ -41,9 +41,12 @@ const RegisterPage = () => {
 
   return (
     <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '70vh' }}>
-      <Card className="w-100" style={{ maxWidth: '460px' }}>
-        <Card.Body>
-          <Card.Title className="mb-3 text-center">Create an Account</Card.Title>
+      <Card className="w-100 border-0 shadow-lg" style={{ maxWidth: '480px' }}>
+        <Card.Body className="p-4">
+          <div className="text-center mb-4">
+            <h2 className="fw-bold mb-2">✨ Create an Account</h2>
+            <p className="text-muted">Join our auction platform today</p>
+          </div>
           <Form onSubmit={handleSubmit(onSubmit)}>
             <Form.Group className="mb-3" controlId="registerUsername">
               <Form.Label>Username</Form.Label>
@@ -82,15 +85,6 @@ const RegisterPage = () => {
                 isInvalid={Boolean(errors.password)}
               />
               <Form.Control.Feedback type="invalid">{errors.password?.message}</Form.Control.Feedback>
-            </Form.Group>
-
-            <Form.Group className="mb-3" controlId="registerRole">
-              <Form.Label>Role</Form.Label>
-              <Form.Select {...register('role')}>
-                <option value="buyer">Buyer</option>
-                <option value="seller">Seller</option>
-                <option value="both">Buyer & Seller</option>
-              </Form.Select>
             </Form.Group>
 
             <motion.div variants={buttonHoverVariants} whileHover="hover" whileTap="tap">

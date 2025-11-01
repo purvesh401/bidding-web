@@ -17,12 +17,7 @@ import cloudinary from '../utils/cloudinary.js';
  */
 export const createItem = async (req, res) => {
   try {
-    // In demo mode, allow any user to create items
-    if (process.env.DISABLE_AUTH !== 'true') {
-      if (!['seller', 'both'].includes(req.user.role)) {
-        return res.status(403).json({ message: 'Only sellers can create auction listings.' });
-      }
-    }
+    // All authenticated users can create auction listings
 
     const now = new Date();
     const defaultEndTime = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
