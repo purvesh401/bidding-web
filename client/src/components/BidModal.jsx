@@ -34,7 +34,7 @@ const BidModal = ({
   <Modal show={show} onHide={onHide} centered>
     <Form onSubmit={onSubmit}>
       <Modal.Header closeButton>
-        <Modal.Title className="fw-bold">💰 Place Your Bid</Modal.Title>
+        <Modal.Title className="fw-bold">Place Your Bid</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <div className="mb-3 p-3 rounded" style={{ background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)' }}>
@@ -56,7 +56,7 @@ const BidModal = ({
             placeholder={formatCurrency(minimumBidDisplay)}
           />
           <Form.Text className="text-muted">
-            💡 You must bid at least {formatCurrency(minimumBidDisplay)} or higher
+            You must bid at least {formatCurrency(minimumBidDisplay)} or higher
           </Form.Text>
         </Form.Group>
       </Modal.Body>
@@ -66,7 +66,7 @@ const BidModal = ({
         </Button>
         <motion.div variants={buttonHoverVariants} whileHover="hover" whileTap="tap">
           <Button type="submit" variant="primary" disabled={isSubmitting} className="fw-bold">
-            {isSubmitting ? '⏳ Submitting…' : '✅ Place Bid'}
+            {isSubmitting ? 'Submitting…' : 'Place Bid'}
           </Button>
         </motion.div>
       </Modal.Footer>

@@ -18,7 +18,7 @@ const BidHistoryList = ({ bids }) => {
   if (!bids.length) {
     return (
       <div className="empty-state">
-        <div className="empty-state-icon">💰</div>
+        <div className="empty-state-icon" />
         <p className="text-muted mb-0">No bids have been placed yet. Be the first to bid!</p>
       </div>
     );
@@ -32,7 +32,7 @@ const BidHistoryList = ({ bids }) => {
             <ListGroup.Item className="d-flex justify-content-between align-items-center bid-history-item">
               <div className="d-flex align-items-center">
                 {index === 0 && (
-                  <span className="me-2" style={{ fontSize: '1.5rem' }}>👑</span>
+                  <span className="me-2" style={{ fontSize: '1.5rem' }} />
                 )}
                 <div>
                   <div className="fw-bold d-flex align-items-center">
@@ -41,7 +41,7 @@ const BidHistoryList = ({ bids }) => {
                       <Badge bg="warning" className="ms-2">Highest</Badge>
                     )}
                   </div>
-                  <div className="text-muted small">⏰ {formatDateTime(bid.timestamp)}</div>
+                  <div className="text-muted small">{formatDateTime(bid.timestamp)}</div>
                 </div>
               </div>
               <div className="text-end">

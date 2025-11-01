@@ -7,6 +7,8 @@
 import mongoose from 'mongoose';
 import Bid from '../models/Bid.js';
 import Item from '../models/Item.js';
+import User from '../models/User.js';
+import { sendEmail } from '../utils/mailer.js';
 
 /**
  * @function placeBid
@@ -25,7 +27,7 @@ export const placeBid = async (req, res) => {
     const bidderId = req.user._id;
   const numericBidAmount = Number(bidAmount);
 
-    const auctionItem = await Item.findById(itemId).session(session);
+  const auctionItem = await Item.findById(itemId).session(session);
 
     if (!auctionItem) {
       await session.abortTransaction();
@@ -44,6 +46,9 @@ export const placeBid = async (req, res) => {
       await session.commitTransaction();
       return res.status(400).json({ message: 'Auction has already ended.' });
     }
+
+    // Capture previous highest bidder for outbid notification
+    const previousHighestBidder = auctionItem.highestBidder ? auctionItem.highestBidder.toString() : null;
 
     // Debug: log identities involved in self-bid check
     console.log('Bidder vs Seller check:', {
@@ -103,6 +108,35 @@ export const placeBid = async (req, res) => {
 
     const socketIo = req.app.get('socketio');
     socketIo.to(`auction_${itemId}`).emit('new-bid-placed', broadcastData);
+
+    // Send outbid email to previous highest bidder (if configured and different from current bidder)
+    try {
+      console.log('📧 Checking outbid notification...');
+      console.log(`   Previous highest bidder: ${previousHighestBidder}`);
+      console.log(`   Current bidder: ${bidderId.toString()}`);
+      
+      if (previousHighestBidder && previousHighestBidder !== bidderId.toString()) {
+        console.log('📧 Previous bidder exists and is different, fetching user...');
+        const prevUser = await User.findById(previousHighestBidder).lean();
+        console.log(`   Previous user email: ${prevUser?.email}`);
+        
+        if (prevUser?.email) {
+          console.log(`📧 Sending outbid email to: ${prevUser.email}`);
+          await sendEmail({
+            to: prevUser.email,
+            subject: `You've been outbid on ${populatedBid.itemId.title}`,
+            text: `Hi ${prevUser.username || 'user'},\n\nYour previous bid on "${populatedBid.itemId.title}" was outbid. The new top bid is $${numericBidAmount}. Visit the auction to place a higher bid.`,
+            html: `<p>Hi ${prevUser.username || 'user'},</p><p>Your previous bid on <strong>${populatedBid.itemId.title}</strong> was outbid. The new top bid is <strong>$${numericBidAmount}</strong>.</p><p><a href="${process.env.CLIENT_URL || ''}/items/${itemId}">View auction</a></p>`
+          });
+        } else {
+          console.log('⚠ Previous user has no email address');
+        }
+      } else {
+        console.log('⚠ No outbid notification needed (same bidder or no previous bidder)');
+      }
+    } catch (notifyErr) {
+      console.error('✗ Error attempting to notify previous bidder:', notifyErr);
+    }
 
     res.status(201).json({
       message: 'Bid placed successfully.',

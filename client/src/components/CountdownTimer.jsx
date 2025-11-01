@@ -100,7 +100,7 @@ const CountdownTimer = ({ endTime, onAuctionEnd }) => {
   return (
     <motion.div animate={shouldPulse() ? { scale: [1, 1.03, 1] } : undefined} transition={{ repeat: Infinity, duration: 1.2 }}>
       <Badge bg={getBadgeVariant()} className={shouldPulse() ? 'countdown-urgent' : ''} style={{ fontSize: '1rem', padding: '0.5rem 1rem' }}>
-        ⏰ {formatTimeDisplay()}
+        {formatTimeDisplay()}
       </Badge>
     </motion.div>
   );

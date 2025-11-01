@@ -6,6 +6,8 @@
 
 import Item from '../models/Item.js';
 import Bid from '../models/Bid.js';
+import User from '../models/User.js';
+import { sendEmail } from './mailer.js';
 
 const DEFAULT_INTERVAL_MS = 30 * 1000; // 30 seconds for responsive demos
 
@@ -41,6 +43,34 @@ const finalizeExpiredAuctions = async (io) => {
           return bid.save();
         })
       );
+
+      // notify winner and seller by email (best-effort)
+      try {
+        const [winnerUser, sellerUser] = await Promise.all([
+          User.findById(auctionItem.winnerId).lean(),
+          User.findById(auctionItem.sellerId).lean()
+        ]);
+
+        if (winnerUser?.email) {
+          sendEmail({
+            to: winnerUser.email,
+            subject: `You won the auction: ${auctionItem.title}`,
+            text: `Congratulations! You won the auction for ${auctionItem.title} with a final price of $${auctionItem.currentPrice}.`,
+            html: `<p>Congratulations!</p><p>You won the auction for <strong>${auctionItem.title}</strong> with a final price of <strong>$${auctionItem.currentPrice}</strong>.</p>`
+          }).catch((e) => console.error('Winner email error:', e));
+        }
+
+        if (sellerUser?.email) {
+          sendEmail({
+            to: sellerUser.email,
+            subject: `Your auction ended: ${auctionItem.title}`,
+            text: `Your auction for ${auctionItem.title} has ended. Final price: $${auctionItem.currentPrice}.`,
+            html: `<p>Your auction for <strong>${auctionItem.title}</strong> has ended. Final price: <strong>$${auctionItem.currentPrice}</strong>.</p>`
+          }).catch((e) => console.error('Seller email error:', e));
+        }
+      } catch (notifyErr) {
+        console.error('Error sending auction end notifications:', notifyErr);
+      }
     }
 
     await auctionItem.save();

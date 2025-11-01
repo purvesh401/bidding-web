@@ -234,14 +234,14 @@ const ItemDetailPage = () => {
                   <Card.Title className="fw-bold mb-3" style={{ fontSize: '1.75rem' }}>{auctionItem.title}</Card.Title>
                   <div className="d-flex gap-2 flex-wrap mb-3">
                     <Badge bg="secondary" className="px-3 py-2 fs-6">
-                      📂 {auctionItem.category}
+                      {auctionItem.category}
                     </Badge>
                     <Badge bg="info" className="px-3 py-2 fs-6">
                       {auctionItem.condition}
                     </Badge>
                     {hasAuctionEnded && (
                       <Badge bg="dark" className="px-3 py-2 fs-6">
-                        ✅ Auction Ended
+                        Auction Ended
                       </Badge>
                     )}
                   </div>
@@ -257,40 +257,40 @@ const ItemDetailPage = () => {
                 <h2 className="price-display mb-0">{formatCurrency(auctionItem.currentPrice)}</h2>
               </motion.div>
 
-              <div className="mb-3 p-3 rounded d-flex justify-content-between align-items-center" style={{ background: 'var(--background-gradient)' }}>
-                <span className="fw-semibold">💰 Total Bids:</span>
+                <div className="mb-3 p-3 rounded d-flex justify-content-between align-items-center" style={{ background: 'var(--background-gradient)' }}>
+                <span className="fw-semibold">Total Bids:</span>
                 <Badge bg="primary" className="fs-6 px-3 py-2">
                   {auctionItem.totalBids} {auctionItem.totalBids === 1 ? 'bid' : 'bids'}
                 </Badge>
               </div>
 
               <div className="mb-3 p-3 rounded d-flex justify-content-between align-items-center" style={{ background: 'var(--background-gradient)' }}>
-                <span className="fw-semibold">📈 Bid Increment:</span>
+                <span className="fw-semibold">Bid Increment:</span>
                 <span className="fw-bold" style={{ color: 'var(--success-color)' }}>{formatCurrency(auctionItem.bidIncrement)}</span>
               </div>
 
               <div className="mb-4 p-3 rounded d-flex justify-content-between align-items-center" style={{ background: 'var(--background-gradient)' }}>
-                <span className="fw-semibold">⏰ Time Remaining:</span>
+                <span className="fw-semibold">Time Remaining:</span>
                 <CountdownTimer endTime={auctionItem.endTime} onAuctionEnd={() => toast.info('Auction ended.')} />
               </div>
 
               {!hasAuctionEnded && !isSeller && (
                 <motion.div variants={buttonHoverVariants} whileHover="hover" whileTap="tap" className="mb-3">
                   <Button className="w-100 fw-bold" style={{ fontSize: '1.1rem', padding: '0.85rem' }} onClick={handlePlaceBidClick}>
-                    💰 Place a Bid
+                    Place a Bid
                   </Button>
                 </motion.div>
               )}
 
               {isSeller && (
                 <Alert variant="info" className="mt-3 mb-0">
-                  <strong>ℹ️ Note:</strong> Sellers cannot place bids on their own items.
+                  <strong>Note:</strong> Sellers cannot place bids on their own items.
                 </Alert>
               )}
 
               {hasAuctionEnded && auctionItem.winnerId && (
                 <Alert variant="success" className="mt-3 mb-0">
-                  <strong>🎉 Winner!</strong> Auction won by bidder ID {auctionItem.winnerId} at {formatCurrency(auctionItem.currentPrice)}
+                  <strong>Winner!</strong> Auction won by bidder ID {auctionItem.winnerId} at {formatCurrency(auctionItem.currentPrice)}
                 </Alert>
               )}
             </Card.Body>
@@ -301,7 +301,7 @@ const ItemDetailPage = () => {
       <Row className="g-4 mt-1">
         <Col lg={7}>
           <Card className="border-0 shadow-sm">
-            <Card.Header className="fw-bold fs-5">📜 Bid History</Card.Header>
+            <Card.Header className="fw-bold fs-5">Bid History</Card.Header>
             <Card.Body>
               <BidHistoryList bids={bidHistory} />
             </Card.Body>
@@ -309,34 +309,34 @@ const ItemDetailPage = () => {
         </Col>
         <Col lg={5}>
           <Card className="border-0 shadow-sm">
-            <Card.Header className="fw-bold fs-5">📋 Item Details</Card.Header>
+            <Card.Header className="fw-bold fs-5">Item Details</Card.Header>
             <Card.Body>
               <Table borderless size="sm" className="mb-0">
                 <tbody>
                   <tr>
-                    <th scope="row" className="fw-semibold">👤 Seller</th>
+                    <th scope="row" className="fw-semibold">Seller</th>
                     <td>
                       <Badge bg="secondary">{auctionItem.sellerId?.username || 'Unknown'}</Badge>
                     </td>
                   </tr>
                   <tr>
-                    <th scope="row" className="fw-semibold">💵 Starting Price</th>
+                    <th scope="row" className="fw-semibold">Starting Price</th>
                     <td className="fw-bold" style={{ color: 'var(--success-color)' }}>{formatCurrency(auctionItem.startingPrice)}</td>
                   </tr>
                   <tr>
-                    <th scope="row" className="fw-semibold">🔒 Reserve Price</th>
+                    <th scope="row" className="fw-semibold">Reserve Price</th>
                     <td>{auctionItem.reservePrice ? <span className="fw-bold" style={{ color: 'var(--warning-color)' }}>{formatCurrency(auctionItem.reservePrice)}</span> : <span className="text-muted">Not Set</span>}</td>
                   </tr>
                   <tr>
-                    <th scope="row" className="fw-semibold">🕐 Start Time</th>
+                    <th scope="row" className="fw-semibold">Start Time</th>
                     <td>{formatDateTime(auctionItem.startTime)}</td>
                   </tr>
                   <tr>
-                    <th scope="row" className="fw-semibold">🕐 End Time</th>
+                    <th scope="row" className="fw-semibold">End Time</th>
                     <td>{formatDateTime(auctionItem.endTime)}</td>
                   </tr>
                   <tr>
-                    <th scope="row" className="fw-semibold">👁️ Views</th>
+                    <th scope="row" className="fw-semibold">Views</th>
                     <td>
                       <Badge bg="info">{auctionItem.viewCount}</Badge>
                     </td>

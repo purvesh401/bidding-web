@@ -1,5 +1,5 @@
 /**
- * @file HomePage.jsx
+ * @file AuctionsPage.jsx
  * @description Displays a grid of active auction items with filter controls.
  */
 
@@ -11,10 +11,10 @@ import ItemCard from '../components/ItemCard.jsx';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 
 /**
- * @component HomePage
+ * @component AuctionsPage
  * @returns {JSX.Element}
  */
-const HomePage = () => {
+const AuctionsPage = () => {
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState({ category: '', status: 'active', search: '' });
@@ -68,7 +68,7 @@ const HomePage = () => {
     <div>
       <div className="d-flex justify-content-between align-items-center mb-5">
         <div>
-          <h1 className="display-5 fw-bold mb-2">Live Antique Auctions</h1>
+          <h1 className="display-5 fw-bold mb-2">Live Auctions</h1>
           <p className="lead text-secondary mb-0">Bid in real time on rare antiques and collectibles</p>
         </div>
         <Badge bg="primary" className="fs-6 px-3 py-2">
@@ -150,4 +150,4 @@ const HomePage = () => {
   );
 };
 
-export default HomePage;
+export default AuctionsPage;
