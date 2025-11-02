@@ -6,7 +6,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSocket } from '../context/SocketContext.jsx';
 import { useAuthContext } from '../hooks/useAuth.js';
-import { FaUsers, FaEye, FaHeart, FaClock, FaComments } from 'react-icons/fa';
+import { FaUsers, FaEye, FaClock, FaComments } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import './LiveAuctionRoom.css';
 import './LiveAuctionRoom.css';
