@@ -147,9 +147,7 @@ export const placeBid = async (req, res) => {
     }
 
     // Trigger auto-bidding logic after successful bid
-    setTimeout(() => {
-      processAutoBidding(itemId, bidderId.toString(), numericBidAmount, socketIo);
-    }, 1000); // Delay to allow current bid to be processed
+    await processAutoBidding(itemId, bidderId.toString(), numericBidAmount, socketIo);
 
     res.status(201).json({
       message: 'Bid placed successfully.',
