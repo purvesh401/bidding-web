@@ -97,7 +97,7 @@ io.on('connection', (socket) => {
   console.log(`🔌 Socket connected: ${socket.id}`);
 
   // User joins an auction room
-  socket.on('join-auction-room', (itemId, userId) => {
+  socket.on('join-auction-room', (itemId) => {
     socket.join(`auction_${itemId}`);
     
     // Track active viewers
