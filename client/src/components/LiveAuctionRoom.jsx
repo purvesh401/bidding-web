@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import './LiveAuctionRoom.css';
 import './LiveAuctionRoom.css';
 
-const LiveAuctionRoom = ({ itemId, itemData }) => {
+const LiveAuctionRoom = ({ itemId }) => {
   const { socket, isConnected } = useSocket();
   const { authUser } = useAuthContext();
   const [viewerCount, setViewerCount] = useState(0);
