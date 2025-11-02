@@ -240,7 +240,7 @@ const ProfilePage = () => {
                     <FaMapMarkerAlt className="me-2" />
                     Address Information
                   </h5>
-                  {authUser.address && (Object.values(authUser.address).some(v => v)) ? (
+                  {typeof authUser.address === 'object' && authUser.address !== null && Object.values(authUser.address).some(v => v) ? (
                     <Row>
                       <Col md={12} className="mb-3">
                         <div className="text-muted small mb-1">Street Address</div>
