@@ -134,7 +134,7 @@ export const getItems = async (req, res) => {
     }
 
     // Determine sort order
-    let sortOption = { createdAt: -1 }; // Default: newest first
+    let sortOption;
     
     switch (sortBy) {
       case 'endingSoon':
