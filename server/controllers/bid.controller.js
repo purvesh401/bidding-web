@@ -234,7 +234,7 @@ export const getUserBidHistory = async (req, res) => {
     // Determine status for each bid
     const bidsWithStatus = userBids.map(bid => {
       const bidObj = bid.toObject();
-      let bidStatus = 'active';
+      let bidStatus;
 
       if (!bid.itemId) {
         // Item might be deleted
