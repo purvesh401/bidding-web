@@ -9,6 +9,7 @@ import Bid from '../models/Bid.js';
 import Item from '../models/Item.js';
 import User from '../models/User.js';
 import { sendEmail } from '../utils/mailer.js';
+import { processAutoBidding } from './autoBid.controller.js';
 
 /**
  * @function placeBid
@@ -108,6 +109,13 @@ export const placeBid = async (req, res) => {
 
     const socketIo = req.app.get('socketio');
     socketIo.to(`auction_${itemId}`).emit('new-bid-placed', broadcastData);
+    
+    // Notify room about new bid for chat notifications
+    socketIo.to(`auction_${itemId}`).emit('auction-alert', {
+      message: `${populatedBid.bidderId.username} placed a bid of $${numericBidAmount}`,
+      type: 'bid',
+      timestamp: new Date()
+    });
 
     // Send outbid email to previous highest bidder (if configured and different from current bidder)
     try {
@@ -137,6 +145,9 @@ export const placeBid = async (req, res) => {
     } catch (notifyErr) {
       console.error('✗ Error attempting to notify previous bidder:', notifyErr);
     }
+
+    // Trigger auto-bidding logic after successful bid
+    await processAutoBidding(itemId, bidderId.toString(), numericBidAmount, socketIo);
 
     res.status(201).json({
       message: 'Bid placed successfully.',
@@ -199,3 +210,190 @@ export const getBidHistory = async (req, res) => {
     res.status(500).json({ message: 'Server error while retrieving bid history.' });
   }
 };
+
+/**
+ * @function getUserBidHistory
+ * @description Returns all bids placed by the authenticated user with their current status.
+ * Determines bid status: 'won', 'lost', 'active', 'outbid', 'winning'.
+ * @param {import('express').Request} req - Express request object containing user info.
+ * @param {import('express').Response} res - Express response object used to send the response.
+ * @returns {Promise<void>}
+ */
+export const getUserBidHistory = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Get all bids by this user with item details
+    const userBids = await Bid.find({ bidderId: userId })
+      .populate({
+        path: 'itemId',
+        select: 'title category currentPrice highestBidder status endTime isAuctionOver'
+      })
+      .sort({ timestamp: -1 });
+
+    // Determine status for each bid
+    const bidsWithStatus = userBids.map(bid => {
+      const bidObj = bid.toObject();
+      let bidStatus;
+
+      if (!bid.itemId) {
+        // Item might be deleted
+        bidStatus = 'lost';
+      } else {
+        const item = bid.itemId;
+        const isHighestBidder = item.highestBidder && item.highestBidder.toString() === userId.toString();
+        const auctionEnded = item.isAuctionOver || item.status === 'ended';
+
+        if (auctionEnded) {
+          // Auction ended
+          bidStatus = isHighestBidder ? 'won' : 'lost';
+        } else {
+          // Auction still active
+          if (isHighestBidder) {
+            bidStatus = 'winning';
+          } else {
+            bidStatus = 'outbid';
+          }
+        }
+      }
+
+      return {
+        ...bidObj,
+        bidStatus
+      };
+    });
+
+    res.status(200).json({
+      bids: bidsWithStatus,
+      totalBids: bidsWithStatus.length
+    });
+  } catch (error) {
+    console.error('Error retrieving user bid history:', error);
+    res.status(500).json({ message: 'Server error while retrieving bid history.' });
+  }
+};
+
+/**
+ * @function retractBid
+ * @description Allows a user to retract their bid under certain conditions.
+ * Rules: Can only retract if user is highest bidder, auction is still active, and within time limit.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @returns {Promise<void>}
+ */
+export const retractBid = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { bidId } = req.params;
+    const { reason } = req.body;
+    const userId = req.user._id;
+
+    // Find the bid
+    const bid = await Bid.findById(bidId).session(session);
+    if (!bid) {
+      await session.abortTransaction();
+      return res.status(404).json({ message: 'Bid not found.' });
+    }
+
+    // Verify the bid belongs to the user
+    if (bid.bidderId.toString() !== userId.toString()) {
+      await session.abortTransaction();
+      return res.status(403).json({ message: 'You can only retract your own bids.' });
+    }
+
+    // Check if already retracted
+    if (bid.isRetracted) {
+      await session.abortTransaction();
+      return res.status(400).json({ message: 'Bid has already been retracted.' });
+    }
+
+    // Get the item
+    const item = await Item.findById(bid.itemId).session(session);
+    if (!item) {
+      await session.abortTransaction();
+      return res.status(404).json({ message: 'Auction item not found.' });
+    }
+
+    // Check if auction is still active
+    if (item.status !== 'active' || item.isAuctionOver) {
+      await session.abortTransaction();
+      return res.status(400).json({ message: 'Cannot retract bids from ended auctions.' });
+    }
+
+    // Check if user is the highest bidder
+    if (!item.highestBidder || item.highestBidder.toString() !== userId.toString()) {
+      await session.abortTransaction();
+      return res.status(400).json({ message: 'Only the highest bidder can retract their bid.' });
+    }
+
+    // Time limit check: can retract within 1 hour of placing bid
+    const hoursSinceBid = (new Date() - new Date(bid.timestamp)) / (1000 * 60 * 60);
+    if (hoursSinceBid > 1) {
+      await session.abortTransaction();
+      return res.status(400).json({ message: 'Bid retraction is only allowed within 1 hour of placement.' });
+    }
+
+    // Mark bid as retracted
+    bid.isRetracted = true;
+    bid.retractionReason = reason || 'No reason provided';
+    bid.retractionTime = new Date();
+    bid.bidStatus = 'retracted';
+    await bid.save({ session });
+
+    // Find the previous highest bid
+    const previousBids = await Bid.find({
+      itemId: item._id,
+      isRetracted: false,
+      _id: { $ne: bidId }
+    })
+      .sort({ bidAmount: -1 })
+      .limit(1)
+      .session(session);
+
+    if (previousBids.length > 0) {
+      // Revert to previous bid
+      item.currentPrice = previousBids[0].bidAmount;
+      item.highestBidder = previousBids[0].bidderId;
+      item.totalBids -= 1;
+    } else {
+      // No other bids, revert to starting price
+      item.currentPrice = item.startingPrice;
+      item.highestBidder = null;
+      item.totalBids = 0;
+    }
+
+    await item.save({ session });
+    await session.commitTransaction();
+
+    // Emit socket event
+    const socketIo = req.app.get('socketio');
+    socketIo.to(`auction_${item._id}`).emit('bid-retracted', {
+      itemId: item._id,
+      newPrice: item.currentPrice,
+      totalBids: item.totalBids,
+      timestamp: new Date()
+    });
+
+    socketIo.to(`auction_${item._id}`).emit('auction-alert', {
+      message: `A bid has been retracted. New price: $${item.currentPrice}`,
+      type: 'retraction',
+      timestamp: new Date()
+    });
+
+    res.status(200).json({
+      message: 'Bid retracted successfully.',
+      updatedItem: item.toObject()
+    });
+  } catch (error) {
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
+    console.error('Error retracting bid:', error);
+    res.status(500).json({ message: 'Server error while retracting bid.' });
+  } finally {
+    session.endSession();
+  }
+};
+

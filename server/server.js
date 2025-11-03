@@ -20,6 +20,8 @@ import connectDatabase from './config/db.js';
 import authRoutes from './routes/auth.routes.js';
 import itemRoutes from './routes/item.routes.js';
 import bidRoutes from './routes/bid.routes.js';
+import watchlistRoutes from './routes/watchlist.routes.js';
+import autoBidRoutes from './routes/autoBid.routes.js';
 import notFoundHandler from './middleware/notFoundHandler.js';
 import errorHandler from './middleware/errorHandler.js';
 import { initializeAuctionScheduler } from './utils/auctionScheduler.js';
@@ -87,21 +89,122 @@ const io = new SocketIOServer(server, {
  * @description Socket.io connection lifecycle handlers. Each listener is documented so the
  * instructor can request modifications such as additional rooms or events.
  */
+
+// Store active users per auction room
+const activeRooms = new Map();
+
 io.on('connection', (socket) => {
   console.log(`🔌 Socket connected: ${socket.id}`);
 
+  // User joins an auction room
   socket.on('join-auction-room', (itemId) => {
     socket.join(`auction_${itemId}`);
-    console.log(`👥 Socket ${socket.id} joined auction room ${itemId}`);
+    
+    // Track active viewers
+    if (!activeRooms.has(itemId)) {
+      activeRooms.set(itemId, new Set());
+    }
+    activeRooms.get(itemId).add(socket.id);
+    
+    // Notify room about viewer count
+    const viewerCount = activeRooms.get(itemId).size;
+    io.to(`auction_${itemId}`).emit('viewer-count-update', {
+      itemId,
+      count: viewerCount
+    });
+    
+    console.log(`👥 Socket ${socket.id} joined auction room ${itemId} (${viewerCount} viewers)`);
   });
 
+  // User leaves an auction room
   socket.on('leave-auction-room', (itemId) => {
     socket.leave(`auction_${itemId}`);
+    
+    // Update viewer count
+    if (activeRooms.has(itemId)) {
+      activeRooms.get(itemId).delete(socket.id);
+      const viewerCount = activeRooms.get(itemId).size;
+      
+      if (viewerCount === 0) {
+        activeRooms.delete(itemId);
+      } else {
+        io.to(`auction_${itemId}`).emit('viewer-count-update', {
+          itemId,
+          count: viewerCount
+        });
+      }
+    }
+    
     console.log(`🚪 Socket ${socket.id} left auction room ${itemId}`);
   });
 
+  // Real-time chat message
+  socket.on('send-auction-message', (data) => {
+    const { itemId, message, userName, timestamp } = data;
+    io.to(`auction_${itemId}`).emit('new-auction-message', {
+      itemId,
+      message,
+      userName,
+      timestamp,
+      socketId: socket.id
+    });
+    console.log(`💬 Chat message in auction ${itemId} from ${userName}`);
+  });
+
+  // User is typing indicator
+  socket.on('user-typing', (data) => {
+    const { itemId, userName, isTyping } = data;
+    socket.to(`auction_${itemId}`).emit('user-typing-update', {
+      userName,
+      isTyping
+    });
+  });
+
+  // Bid update notification
+  socket.on('new-bid-placed', (data) => {
+    const { itemId, bidData } = data;
+    io.to(`auction_${itemId}`).emit('bid-update', bidData);
+    console.log(`💰 New bid placed on item ${itemId}`);
+  });
+
+  // Auction ending soon alert
+  socket.on('auction-ending-soon', (itemId) => {
+    io.to(`auction_${itemId}`).emit('auction-alert', {
+      type: 'ending-soon',
+      itemId,
+      message: 'This auction is ending in 5 minutes!'
+    });
+  });
+
+  // Watch/Favorite notifications
+  socket.on('item-watched', (data) => {
+    const { itemId, watchCount } = data;
+    io.to(`auction_${itemId}`).emit('watch-count-update', {
+      itemId,
+      count: watchCount
+    });
+  });
+
+  // Disconnect handler - clean up all rooms
   socket.on('disconnect', (reason) => {
     console.log(`❌ Socket disconnected (${socket.id}): ${reason}`);
+    
+    // Remove from all auction rooms
+    activeRooms.forEach((viewers, itemId) => {
+      if (viewers.has(socket.id)) {
+        viewers.delete(socket.id);
+        const viewerCount = viewers.size;
+        
+        if (viewerCount === 0) {
+          activeRooms.delete(itemId);
+        } else {
+          io.to(`auction_${itemId}`).emit('viewer-count-update', {
+            itemId,
+            count: viewerCount
+          });
+        }
+      }
+    });
   });
 });
 
@@ -113,6 +216,8 @@ app.set('socketio', io);
 app.use('/api/auth', authRoutes);
 app.use('/api/items', itemRoutes);
 app.use('/api/bids', bidRoutes);
+app.use('/api/watchlist', watchlistRoutes);
+app.use('/api/auto-bids', autoBidRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });

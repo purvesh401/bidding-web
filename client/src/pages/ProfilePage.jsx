@@ -5,9 +5,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { Card, Form, Button, Row, Col, Alert } from 'react-bootstrap';
+import { Card, Form, Button, Row, Col, Alert, Badge } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 import { motion } from 'framer-motion';
+import { FaEdit, FaSave, FaTimes, FaEnvelope, FaPhone, FaMapMarkerAlt, FaUser, FaClock } from 'react-icons/fa';
 import { useAuthContext } from '../hooks/useAuth.js';
 import api from '../services/api.js';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
@@ -22,6 +23,7 @@ const ProfilePage = () => {
   const { authUser, setAuthUser } = useAuthContext();
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   
   const {
     register,
@@ -88,6 +90,7 @@ const ProfilePage = () => {
       const response = await api.put('/auth/profile', updateData);
       
       setAuthUser(response.data.user);
+      setIsEditMode(false);
       toast.success('Profile updated successfully!');
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to update profile.';
@@ -95,6 +98,11 @@ const ProfilePage = () => {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleCancelEdit = () => {
+    reset();
+    setIsEditMode(false);
   };
 
   if (isLoading) {
@@ -115,9 +123,22 @@ const ProfilePage = () => {
 
   return (
     <div>
-      <div className="mb-5">
-        <h1 className="display-6 fw-bold mb-2">My Profile</h1>
-        <p className="text-muted lead">Manage your account information and preferences</p>
+      <div className="mb-5 d-flex justify-content-between align-items-center">
+        <div>
+          <h1 className="display-6 fw-bold mb-2">My Profile</h1>
+          <p className="text-muted lead">Manage your account information and preferences</p>
+        </div>
+        {!isEditMode && (
+          <motion.div variants={buttonHoverVariants} whileHover="hover" whileTap="tap">
+            <Button 
+              variant="primary" 
+              onClick={() => setIsEditMode(true)}
+              className="d-flex align-items-center gap-2"
+            >
+              <FaEdit /> Edit Profile
+            </Button>
+          </motion.div>
+        )}
       </div>
 
       <Row className="g-4">
@@ -149,10 +170,17 @@ const ProfilePage = () => {
               </div>
               <h3 className="fw-bold mb-1">{authUser.username}</h3>
               <p className="text-muted mb-2">{authUser.email}</p>
+              <Badge bg="primary" className="mb-3">{authUser.role}</Badge>
               <div className="text-muted small">
-                <div>Member since: {formatDateTime(authUser.createdAt)}</div>
+                <div className="d-flex align-items-center justify-content-center gap-2 mb-2">
+                  <FaClock />
+                  <span>Member since: {formatDateTime(authUser.createdAt)}</span>
+                </div>
                 {authUser.lastLogin && (
-                  <div className="mt-1">Last login: {formatDateTime(authUser.lastLogin)}</div>
+                  <div className="d-flex align-items-center justify-content-center gap-2">
+                    <FaClock />
+                    <span>Last login: {formatDateTime(authUser.lastLogin)}</span>
+                  </div>
                 )}
               </div>
             </Card.Body>
@@ -161,149 +189,230 @@ const ProfilePage = () => {
 
         <Col lg={8}>
           <Card className="border-0 shadow-sm">
-            <Card.Header className="fw-bold">Edit Profile</Card.Header>
+            <Card.Header className="fw-bold d-flex justify-content-between align-items-center">
+              {isEditMode ? 'Edit Profile' : 'Profile Information'}
+              {isEditMode && (
+                <Button 
+                  variant="outline-secondary" 
+                  size="sm"
+                  onClick={handleCancelEdit}
+                  className="d-flex align-items-center gap-1"
+                >
+                  <FaTimes /> Cancel
+                </Button>
+              )}
+            </Card.Header>
             <Card.Body>
-              <Form onSubmit={handleSubmit(onSubmit)}>
-                <Row>
-                  <Col md={6}>
-                    <Form.Group className="mb-3" controlId="profileUsername">
-                      <Form.Label className="fw-semibold">Username</Form.Label>
-                      <Form.Control
-                        type="text"
-                        {...register('username', {
-                          required: 'Username is required.',
-                          minLength: { value: 3, message: 'Minimum length is 3 characters.' }
-                        })}
-                        isInvalid={Boolean(errors.username)}
-                      />
-                      <Form.Control.Feedback type="invalid">
-                        {errors.username?.message}
-                      </Form.Control.Feedback>
-                    </Form.Group>
-                  </Col>
+              {!isEditMode ? (
+                <div>
+                  <h5 className="fw-bold mb-3 text-primary">
+                    <FaUser className="me-2" />
+                    Personal Information
+                  </h5>
+                  <Row className="mb-4">
+                    <Col md={6} className="mb-3">
+                      <div className="text-muted small mb-1">Username</div>
+                      <div className="fw-semibold">{authUser.username || '-'}</div>
+                    </Col>
+                    <Col md={6} className="mb-3">
+                      <div className="text-muted small mb-1">
+                        <FaEnvelope className="me-1" />
+                        Email
+                      </div>
+                      <div className="fw-semibold">{authUser.email || '-'}</div>
+                    </Col>
+                    <Col md={6} className="mb-3">
+                      <div className="text-muted small mb-1">
+                        <FaPhone className="me-1" />
+                        Phone Number
+                      </div>
+                      <div className="fw-semibold">{authUser.phoneNumber || 'Not provided'}</div>
+                    </Col>
+                    <Col md={6} className="mb-3">
+                      <div className="text-muted small mb-1">Account Type</div>
+                      <div className="fw-semibold text-capitalize">{authUser.role || '-'}</div>
+                    </Col>
+                  </Row>
 
-                  <Col md={6}>
-                    <Form.Group className="mb-3" controlId="profileEmail">
-                      <Form.Label className="fw-semibold">Email</Form.Label>
-                      <Form.Control
-                        type="email"
-                        {...register('email', {
-                          required: 'Email is required.',
-                          pattern: {
-                            value: /^\S+@\S+\.\S+$/,
-                            message: 'Please provide a valid email address.'
-                          }
-                        })}
-                        isInvalid={Boolean(errors.email)}
-                      />
-                      <Form.Control.Feedback type="invalid">
-                        {errors.email?.message}
-                      </Form.Control.Feedback>
-                    </Form.Group>
-                  </Col>
-                </Row>
+                  <hr className="my-4" />
 
-                <Form.Group className="mb-3" controlId="profilePhoneNumber">
-                  <Form.Label className="fw-semibold">Phone Number</Form.Label>
-                  <Form.Control
-                    type="tel"
-                    placeholder="+1 234 567 8900"
-                    {...register('phoneNumber')}
-                  />
-                  <Form.Text className="text-muted">
-                    Optional: Add your phone number for account verification
-                  </Form.Text>
-                </Form.Group>
-
-                <Form.Group className="mb-3" controlId="profileImage">
-                  <Form.Label className="fw-semibold">Profile Image URL</Form.Label>
-                  <Form.Control
-                    type="url"
-                    placeholder="https://example.com/image.jpg"
-                    {...register('profileImage')}
-                  />
-                  <Form.Text className="text-muted">
-                    Optional: Add a URL to your profile image
-                  </Form.Text>
-                </Form.Group>
-
-                <hr className="my-4" />
-
-                <h5 className="fw-bold mb-3">Address Information</h5>
-
-                <Form.Group className="mb-3" controlId="profileStreet">
-                  <Form.Label className="fw-semibold">Street Address</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="123 Main Street"
-                    {...register('street')}
-                  />
-                </Form.Group>
-
-                <Row>
-                  <Col md={6}>
-                    <Form.Group className="mb-3" controlId="profileCity">
-                      <Form.Label className="fw-semibold">City</Form.Label>
-                      <Form.Control
-                        type="text"
-                        placeholder="New York"
-                        {...register('city')}
-                      />
-                    </Form.Group>
-                  </Col>
-
-                  <Col md={6}>
-                    <Form.Group className="mb-3" controlId="profileState">
-                      <Form.Label className="fw-semibold">State/Province</Form.Label>
-                      <Form.Control
-                        type="text"
-                        placeholder="NY"
-                        {...register('state')}
-                      />
-                    </Form.Group>
-                  </Col>
-                </Row>
-
-                <Row>
-                  <Col md={6}>
-                    <Form.Group className="mb-3" controlId="profileZipCode">
-                      <Form.Label className="fw-semibold">Zip/Postal Code</Form.Label>
-                      <Form.Control
-                        type="text"
-                        placeholder="10001"
-                        {...register('zipCode')}
-                      />
-                    </Form.Group>
-                  </Col>
-
-                  <Col md={6}>
-                    <Form.Group className="mb-3" controlId="profileCountry">
-                      <Form.Label className="fw-semibold">Country</Form.Label>
-                      <Form.Control
-                        type="text"
-                        placeholder="United States"
-                        {...register('country')}
-                      />
-                    </Form.Group>
-                  </Col>
-                </Row>
-
-                <div className="d-flex justify-content-end gap-2 mt-4">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => reset()}
-                    disabled={isSaving}
-                  >
-                    Reset
-                  </Button>
-                  <motion.div variants={buttonHoverVariants} whileHover="hover" whileTap="tap">
-                    <Button type="submit" variant="primary" disabled={isSaving}>
-                      {isSaving ? 'Saving...' : 'Save Changes'}
-                    </Button>
-                  </motion.div>
+                  <h5 className="fw-bold mb-3 text-primary">
+                    <FaMapMarkerAlt className="me-2" />
+                    Address Information
+                  </h5>
+                  {typeof authUser.address === 'object' && authUser.address !== null && Object.values(authUser.address).some(v => v) ? (
+                    <Row>
+                      <Col md={12} className="mb-3">
+                        <div className="text-muted small mb-1">Street Address</div>
+                        <div className="fw-semibold">{authUser.address.street || '-'}</div>
+                      </Col>
+                      <Col md={6} className="mb-3">
+                        <div className="text-muted small mb-1">City</div>
+                        <div className="fw-semibold">{authUser.address.city || '-'}</div>
+                      </Col>
+                      <Col md={6} className="mb-3">
+                        <div className="text-muted small mb-1">State/Province</div>
+                        <div className="fw-semibold">{authUser.address.state || '-'}</div>
+                      </Col>
+                      <Col md={6} className="mb-3">
+                        <div className="text-muted small mb-1">Zip/Postal Code</div>
+                        <div className="fw-semibold">{authUser.address.zipCode || '-'}</div>
+                      </Col>
+                      <Col md={6} className="mb-3">
+                        <div className="text-muted small mb-1">Country</div>
+                        <div className="fw-semibold">{authUser.address.country || '-'}</div>
+                      </Col>
+                    </Row>
+                  ) : (
+                    <Alert variant="info" className="mb-0">
+                      No address information provided. Click "Edit Profile" to add your address.
+                    </Alert>
+                  )}
                 </div>
-              </Form>
+              ) : (
+                <Form onSubmit={handleSubmit(onSubmit)}>
+                  <Row>
+                    <Col md={6}>
+                      <Form.Group className="mb-3" controlId="profileUsername">
+                        <Form.Label className="fw-semibold">Username</Form.Label>
+                        <Form.Control
+                          type="text"
+                          {...register('username', {
+                            required: 'Username is required.',
+                            minLength: { value: 3, message: 'Minimum length is 3 characters.' }
+                          })}
+                          isInvalid={Boolean(errors.username)}
+                        />
+                        <Form.Control.Feedback type="invalid">
+                          {errors.username?.message}
+                        </Form.Control.Feedback>
+                      </Form.Group>
+                    </Col>
+
+                    <Col md={6}>
+                      <Form.Group className="mb-3" controlId="profileEmail">
+                        <Form.Label className="fw-semibold">Email</Form.Label>
+                        <Form.Control
+                          type="email"
+                          {...register('email', {
+                            required: 'Email is required.',
+                            pattern: {
+                              value: /^\S+@\S+\.\S+$/,
+                              message: 'Please provide a valid email address.'
+                            }
+                          })}
+                          isInvalid={Boolean(errors.email)}
+                        />
+                        <Form.Control.Feedback type="invalid">
+                          {errors.email?.message}
+                        </Form.Control.Feedback>
+                      </Form.Group>
+                    </Col>
+                  </Row>
+
+                  <Form.Group className="mb-3" controlId="profilePhoneNumber">
+                    <Form.Label className="fw-semibold">Phone Number</Form.Label>
+                    <Form.Control
+                      type="tel"
+                      placeholder="+1 234 567 8900"
+                      {...register('phoneNumber')}
+                    />
+                    <Form.Text className="text-muted">
+                      Optional: Add your phone number for account verification
+                    </Form.Text>
+                  </Form.Group>
+
+                  <Form.Group className="mb-3" controlId="profileImage">
+                    <Form.Label className="fw-semibold">Profile Image URL</Form.Label>
+                    <Form.Control
+                      type="url"
+                      placeholder="https://example.com/image.jpg"
+                      {...register('profileImage')}
+                    />
+                    <Form.Text className="text-muted">
+                      Optional: Add a URL to your profile image
+                    </Form.Text>
+                  </Form.Group>
+
+                  <hr className="my-4" />
+
+                  <h5 className="fw-bold mb-3">Address Information</h5>
+
+                  <Form.Group className="mb-3" controlId="profileStreet">
+                    <Form.Label className="fw-semibold">Street Address</Form.Label>
+                    <Form.Control
+                      type="text"
+                      placeholder="123 Main Street"
+                      {...register('street')}
+                    />
+                  </Form.Group>
+
+                  <Row>
+                    <Col md={6}>
+                      <Form.Group className="mb-3" controlId="profileCity">
+                        <Form.Label className="fw-semibold">City</Form.Label>
+                        <Form.Control
+                          type="text"
+                          placeholder="New York"
+                          {...register('city')}
+                        />
+                      </Form.Group>
+                    </Col>
+
+                    <Col md={6}>
+                      <Form.Group className="mb-3" controlId="profileState">
+                        <Form.Label className="fw-semibold">State/Province</Form.Label>
+                        <Form.Control
+                          type="text"
+                          placeholder="NY"
+                          {...register('state')}
+                        />
+                      </Form.Group>
+                    </Col>
+                  </Row>
+
+                  <Row>
+                    <Col md={6}>
+                      <Form.Group className="mb-3" controlId="profileZipCode">
+                        <Form.Label className="fw-semibold">Zip/Postal Code</Form.Label>
+                        <Form.Control
+                          type="text"
+                          placeholder="10001"
+                          {...register('zipCode')}
+                        />
+                      </Form.Group>
+                    </Col>
+
+                    <Col md={6}>
+                      <Form.Group className="mb-3" controlId="profileCountry">
+                        <Form.Label className="fw-semibold">Country</Form.Label>
+                        <Form.Control
+                          type="text"
+                          placeholder="United States"
+                          {...register('country')}
+                        />
+                      </Form.Group>
+                    </Col>
+                  </Row>
+
+                  <div className="d-flex justify-content-end gap-2 mt-4">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={handleCancelEdit}
+                      disabled={isSaving}
+                      className="d-flex align-items-center gap-2"
+                    >
+                      <FaTimes /> Cancel
+                    </Button>
+                    <motion.div variants={buttonHoverVariants} whileHover="hover" whileTap="tap">
+                      <Button type="submit" variant="primary" disabled={isSaving} className="d-flex align-items-center gap-2">
+                        <FaSave /> {isSaving ? 'Saving...' : 'Save Changes'}
+                      </Button>
+                    </motion.div>
+                  </div>
+                </Form>
+              )}
             </Card.Body>
           </Card>
         </Col>
@@ -313,4 +422,3 @@ const ProfilePage = () => {
 };
 
 export default ProfilePage;
-

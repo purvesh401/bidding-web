@@ -91,7 +91,11 @@ const userSchema = new Schema(
     lastLogin: {
       type: Date,
       default: Date.now
-    }
+    },
+    watchlist: [{
+      type: Schema.Types.ObjectId,
+      ref: 'Item'
+    }]
   },
   {
     timestamps: false,

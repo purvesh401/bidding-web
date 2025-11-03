@@ -96,14 +96,14 @@ export const createItem = async (req, res) => {
 
 /**
  * @function getItems
- * @description Retrieves auction items with optional filters such as category, status, and search.
+ * @description Retrieves auction items with optional filters such as category, status, search, price range, condition, and sorting.
  * @param {import('express').Request} req - Express request object with query parameters.
  * @param {import('express').Response} res - Express response object used to send the response.
  * @returns {Promise<void>}
  */
 export const getItems = async (req, res) => {
   try {
-    const { category, status, search } = req.query;
+    const { category, status, search, condition, minPrice, maxPrice, sortBy } = req.query;
     const filters = {};
 
     if (category) {
@@ -118,9 +118,47 @@ export const getItems = async (req, res) => {
       filters.title = { $regex: search, $options: 'i' };
     }
 
+    if (condition) {
+      filters.condition = condition;
+    }
+
+    // Price range filter
+    if (minPrice || maxPrice) {
+      filters.currentPrice = {};
+      if (minPrice) {
+        filters.currentPrice.$gte = Number(minPrice);
+      }
+      if (maxPrice) {
+        filters.currentPrice.$lte = Number(maxPrice);
+      }
+    }
+
+    // Determine sort order
+    let sortOption;
+    
+    switch (sortBy) {
+      case 'endingSoon':
+        sortOption = { endTime: 1 }; // Ascending order (ending soonest first)
+        break;
+      case 'newest':
+        sortOption = { createdAt: -1 }; // Descending order
+        break;
+      case 'priceLowToHigh':
+        sortOption = { currentPrice: 1 }; // Ascending price
+        break;
+      case 'priceHighToLow':
+        sortOption = { currentPrice: -1 }; // Descending price
+        break;
+      case 'mostBids':
+        sortOption = { totalBids: -1 }; // Most bids first
+        break;
+      default:
+        sortOption = { createdAt: -1 };
+    }
+
     const items = await Item.find(filters)
       .populate('sellerId', 'username role')
-      .sort({ createdAt: -1 });
+      .sort(sortOption);
 
     res.status(200).json({ items });
   } catch (listError) {

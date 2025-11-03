@@ -16,6 +16,8 @@ import RegisterPage from './pages/RegisterPage.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
 import CreateListing from './pages/CreateListing.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
+import WatchlistPage from './pages/WatchlistPage.jsx';
+import BidHistoryPage from './pages/BidHistoryPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import { useAuthContext } from './hooks/useAuth.js';
@@ -45,6 +47,8 @@ const App = () => {
               {authUser && (
                 <>
                   <Nav.Link as={Link} to="/dashboard" className="fw-semibold">Dashboard</Nav.Link>
+                  <Nav.Link as={Link} to="/watchlist" className="fw-semibold">Watchlist</Nav.Link>
+                  <Nav.Link as={Link} to="/bid-history" className="fw-semibold">Bid History</Nav.Link>
                   <Nav.Link as={Link} to="/create-listing" className="fw-semibold">Create Listing</Nav.Link>
                   <Nav.Link as={Link} to="/profile" className="fw-semibold">Profile</Nav.Link>
                 </>
@@ -129,6 +133,26 @@ const App = () => {
                 <ProtectedRoute>
                   <motion.div variants={pageTransitionVariants} initial="hidden" animate="visible" exit="exit">
                     <ProfilePage />
+                  </motion.div>
+                </ProtectedRoute>
+              )}
+            />
+            <Route
+              path="/watchlist"
+              element={(
+                <ProtectedRoute>
+                  <motion.div variants={pageTransitionVariants} initial="hidden" animate="visible" exit="exit">
+                    <WatchlistPage />
+                  </motion.div>
+                </ProtectedRoute>
+              )}
+            />
+            <Route
+              path="/bid-history"
+              element={(
+                <ProtectedRoute>
+                  <motion.div variants={pageTransitionVariants} initial="hidden" animate="visible" exit="exit">
+                    <BidHistoryPage />
                   </motion.div>
                 </ProtectedRoute>
               )}

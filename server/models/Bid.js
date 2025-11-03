@@ -44,8 +44,20 @@ const bidSchema = new Schema(
     },
     bidStatus: {
       type: String,
-      enum: ['active', 'outbid', 'winning', 'won', 'lost'],
+      enum: ['active', 'outbid', 'winning', 'won', 'lost', 'retracted'],
       default: 'active'
+    },
+    isRetracted: {
+      type: Boolean,
+      default: false
+    },
+    retractionReason: {
+      type: String,
+      default: null
+    },
+    retractionTime: {
+      type: Date,
+      default: null
     },
     ipAddress: {
       type: String,
