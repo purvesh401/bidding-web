@@ -59,6 +59,19 @@ export const createItem = async (req, res) => {
         ? bodyImages.slice(0, 5)
         : [placeholderImage];
 
+    // Parse dimensions if provided as JSON string (from FormData)
+    let parsedDimensions;
+    if (req.body.dimensions) {
+      try {
+        parsedDimensions = typeof req.body.dimensions === 'string' 
+          ? JSON.parse(req.body.dimensions) 
+          : req.body.dimensions;
+      } catch (parseError) {
+        console.error('Failed to parse dimensions:', parseError);
+        parsedDimensions = undefined;
+      }
+    }
+
     const itemPayload = {
       title: generatedTitle,
       description: req.body.description || 'No description provided.',
@@ -73,7 +86,7 @@ export const createItem = async (req, res) => {
       condition: req.body.condition || 'Good',
       era: req.body.era,
       authenticity: req.body.authenticity,
-      dimensions: req.body.dimensions
+      dimensions: parsedDimensions
     };
 
     const createdItem = await Item.create(itemPayload);
