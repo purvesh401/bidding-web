@@ -3,7 +3,7 @@
  * @description Displays a detailed view of a single auction item with real-time bidding.
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -53,6 +53,7 @@ const ItemDetailPage = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [isInWatchlist, setIsInWatchlist] = useState(false);
   const [hasShownEndNotification, setHasShownEndNotification] = useState(false);
+  const lastNotifiedBidIdRef = useRef(null);
 
   useEffect(() => {
     if (!itemId) {
@@ -65,7 +66,13 @@ const ItemDetailPage = () => {
       try {
         const response = await api.get(`/items/${itemId}`);
         setAuctionItem(response.data.item);
-        setBidHistory(response.data.recentBids);
+        
+        // Deduplicate and sort bids by timestamp (newest first)
+        const uniqueBids = Array.from(
+          new Map(response.data.recentBids.map(bid => [bid._id, bid])).values()
+        ).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        
+        setBidHistory(uniqueBids);
         setBidAmountInput(
           String(response.data.item.currentPrice + response.data.item.bidIncrement)
         );
@@ -78,78 +85,106 @@ const ItemDetailPage = () => {
     };
 
     fetchItemDetails();
-
-    // Auto-refresh only prices and bids every 3 seconds (lightweight)
-    const intervalId = setInterval(async () => {
-      if (auctionItem) {
-        try {
-          const { prices } = await fetchItemPrices([itemId]);
-          if (prices.length > 0) {
-            const priceData = prices[0];
-            setAuctionItem((prev) => ({
-              ...prev,
-              currentPrice: priceData.currentPrice,
-              totalBids: priceData.totalBids,
-              highestBidder: priceData.highestBidder,
-              status: priceData.status,
-              isAuctionOver: priceData.isAuctionOver
-            }));
-          }
-          
-          // Fetch updated bid history
-          const historyResponse = await api.get(`/bids/${itemId}`);
-          setBidHistory(historyResponse.data.bids);
-        } catch (error) {
-          console.error('Failed to fetch price updates:', error);
-        }
-      }
-    }, 3000);
-
-    return () => clearInterval(intervalId);
-  }, [itemId, navigate, auctionItem?._id]);
+  }, [itemId, navigate]);
 
   useEffect(() => {
-    if (!socket || !isConnected || !itemId) {
+    if (!socket || !itemId) {
+      console.log('⚠️ Socket listener setup blocked:', { hasSocket: !!socket, itemId });
       return;
     }
 
-    socket.emit('join-auction-room', {
-      itemId,
-      userId: authUser?._id || null
-    });
+    console.log('🔌 Registering socket listeners for item:', itemId, 'Socket connected:', socket.connected, 'Socket ID:', socket.id);
+    
+    // Join auction room (will work even if socket not fully connected yet - socket.io queues it)
+    socket.emit('join-auction-room', { itemId, userId: authUser?._id || null });
 
     const handleNewBidPlaced = (payload) => {
-      setAuctionItem((previous) =>
-        previous
-          ? {
-              ...previous,
-              currentPrice: payload.newPrice,
-              totalBids: payload.totalBids,
-              bidIncrement: payload.bidIncrement,
-              highestBidder: {
-                _id: payload.bidderId,
-                username: payload.bidderUsername
-              },
-              updatedAt: payload.timestamp
-            }
-          : previous
-      );
-
-      setBidHistory((previousHistory) => [
-        {
-          _id: payload.bidId,
-          bidderId: { username: payload.bidderUsername },
-          bidAmount: payload.newPrice,
-          timestamp: payload.timestamp
-        },
-        ...previousHistory
-      ]);
-
-      if (authUser?.username !== payload.bidderUsername) {
-        toast.info(`New bid placed by ${payload.bidderUsername}: ${formatCurrency(payload.newPrice)}`);
+      console.log('📨 Received new-bid-placed:', payload);
+      console.log('   Current itemId:', itemId, 'Payload itemId:', payload.itemId, 'Match:', payload.itemId === itemId);
+      
+      // Only process if this bid is for the current item
+      if (payload.itemId !== itemId) {
+        console.log('   ❌ Ignoring - different item');
+        return;
       }
+      
+      console.log('   ✅ Processing bid update...');
+      
+      // First, check if this bid already exists in history (synchronous check)
+      let shouldProcess = true;
+      setBidHistory((previousHistory) => {
+        // Check by bid ID or by unique combination (amount + username + similar timestamp)
+        const bidExists = previousHistory.some(bid => {
+          const idMatch = bid._id === payload.bidId;
+          const duplicateCheck = (
+            bid.bidAmount === payload.newPrice &&
+            bid.bidderId?.username === payload.bidderUsername &&
+            Math.abs(new Date(bid.timestamp) - new Date(payload.timestamp)) < 5000 // within 5 seconds
+          );
+          return idMatch || duplicateCheck;
+        });
+        
+        if (bidExists) {
+          console.log('   ⚠️ Bid already in history, skipping all updates');
+          shouldProcess = false;
+          return previousHistory; // Skip - already processed
+        }
+        
+        console.log('   ➕ Adding NEW bid to history');
+        
+        // Return new history with the bid added
+        return [
+          {
+            _id: payload.bidId,
+            bidderId: { username: payload.bidderUsername },
+            bidAmount: payload.newPrice,
+            timestamp: payload.timestamp
+          },
+          ...previousHistory
+        ];
+      });
 
-  setBidAmountInput(String(payload.newPrice + payload.bidIncrement));
+      // Only update if bid was new (not skipped)
+      if (shouldProcess) {
+        // Update auction item state
+        setAuctionItem((previous) => {
+          if (!previous) {
+            console.log('   ⚠️ No previous auction item');
+            return previous;
+          }
+          
+          console.log('   💰 Updating auction item:', {
+            oldPrice: previous.currentPrice,
+            newPrice: payload.newPrice,
+            oldBidder: previous.highestBidder?.username,
+            newBidder: payload.bidderUsername
+          });
+          
+          return {
+            ...previous,
+            currentPrice: payload.newPrice,
+            totalBids: payload.totalBids,
+            bidIncrement: payload.bidIncrement,
+            highestBidder: {
+              _id: payload.bidderId,
+              username: payload.bidderUsername
+            },
+            updatedAt: payload.timestamp
+          };
+        });
+
+        // Show toast notification only to OTHER users (not the person who bid)
+        // And only if we haven't already shown this specific bid notification
+        if (authUser?.username !== payload.bidderUsername && lastNotifiedBidIdRef.current !== payload.bidId) {
+          console.log('   🔔 Showing toast notification');
+          toast.info(`New bid: ${formatCurrency(payload.newPrice)} by ${payload.bidderUsername}`);
+          lastNotifiedBidIdRef.current = payload.bidId;
+        } else {
+          console.log('   🔇 Skipping toast:', authUser?.username === payload.bidderUsername ? 'own bid' : 'already notified');
+        }
+
+        setBidAmountInput(String(payload.newPrice + payload.bidIncrement));
+      }
     };
 
     const handleAuctionEnded = (payload) => {
@@ -178,7 +213,7 @@ const ItemDetailPage = () => {
       socket.off('auction-ended', handleAuctionEnded);
       socket.emit('leave-auction-room', itemId);
     };
-  }, [socket, isConnected, itemId, authUser, auctionItem?.bidIncrement, hasShownEndNotification]);
+  }, [socket, itemId]);
 
   const minimumBid = useMemo(() => {
     if (!auctionItem) {
@@ -243,12 +278,51 @@ const ItemDetailPage = () => {
       return;
     }
 
+    // Check if user is already highest bidder trying to bid the minimum amount
+    const isCurrentHighestBidder = auctionItem.highestBidder?._id === authUser?._id || 
+                                    auctionItem.highestBidder?.toString() === authUser?._id;
+    
+    if (isCurrentHighestBidder && parsedBidAmount === minimumBid) {
+      toast.error('You are already the highest bidder. Please bid a higher amount.');
+      return;
+    }
+
     try {
       setIsSubmittingBid(true);
-      await api.post('/bids', {
+      const response = await api.post('/bids', {
         itemId,
         bidAmount: parsedBidAmount
       });
+      
+      // Optimistic update for the bidder (since socket event might be delayed)
+      const bidData = response.data.bid;
+      
+      // Update auction item immediately
+      setAuctionItem((previous) => ({
+        ...previous,
+        currentPrice: parsedBidAmount,
+        totalBids: previous.totalBids + 1,
+        highestBidder: {
+          _id: authUser._id,
+          username: authUser.username
+        },
+        updatedAt: new Date()
+      }));
+      
+      // Add to bid history immediately
+      setBidHistory((previousHistory) => [
+        {
+          _id: bidData._id,
+          bidderId: { username: authUser.username },
+          bidAmount: parsedBidAmount,
+          timestamp: bidData.timestamp || new Date()
+        },
+        ...previousHistory
+      ]);
+      
+      // Update minimum bid input
+      setBidAmountInput(String(parsedBidAmount + auctionItem.bidIncrement));
+      
       toast.success('Bid submitted successfully.');
       setShowBidModal(false);
     } catch (error) {

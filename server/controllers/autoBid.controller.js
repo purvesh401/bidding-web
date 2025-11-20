@@ -237,6 +237,7 @@ export const processAutoBidding = async (itemId, latestBidderId, currentPrice, s
       socketIo.emit('new-bid-placed', autoBidData);
 
       socketIo.to(`auction_${itemId}`).emit('auction-alert', {
+        itemId,
         message: `Auto-bid placed by ${populatedBid.bidderId.username}: $${nextBidAmount}`,
         type: 'auto-bid',
         timestamp: new Date()
@@ -248,6 +249,7 @@ export const processAutoBidding = async (itemId, latestBidderId, currentPrice, s
       await session.commitTransaction();
 
       socketIo.to(`auction_${itemId}`).emit('auction-alert', {
+        itemId,
         message: 'Auto-bid maximum reached.',
         type: 'info',
         timestamp: new Date()
