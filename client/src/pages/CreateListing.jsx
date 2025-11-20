@@ -473,10 +473,20 @@ const CreateListing = () => {
                                 type="datetime-local"
                                 className="py-2"
                                 {...register('endTime', {
-                                  required: 'End time is required.',
+                                  required: 'Auction end time is required.',
                                   validate: (value) => {
+                                    if (!value) {
+                                      return 'Please select an end time for the auction.';
+                                    }
                                     const start = watch('startTime');
-                                    if (start && value && new Date(value) <= new Date(start)) {
+                                    const now = new Date();
+                                    const endDate = new Date(value);
+                                    
+                                    if (endDate <= now) {
+                                      return 'End time must be in the future.';
+                                    }
+                                    
+                                    if (start && endDate <= new Date(start)) {
                                       return 'End time must be after the start time.';
                                     }
                                     return true;
@@ -485,6 +495,7 @@ const CreateListing = () => {
                                 isInvalid={Boolean(errors.endTime)}
                               />
                               <Form.Control.Feedback type="invalid">{errors.endTime?.message}</Form.Control.Feedback>
+                              <Form.Text className="text-muted">When should the auction end?</Form.Text>
                             </Form.Group>
                           </Col>
                         </Row>
