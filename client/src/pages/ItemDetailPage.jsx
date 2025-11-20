@@ -29,7 +29,7 @@ import ImageGallery from '../components/ImageGallery.jsx';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import BidHistoryList from '../components/BidHistoryList.jsx';
 import LiveAuctionRoom from '../components/LiveAuctionRoom.jsx';
-import api from '../services/api.js';
+import api, { fetchItemPrices } from '../services/api.js';
 import { formatCurrency, formatDateTime } from '../utils/formatters.js';
 import { priceUpdateVariants, buttonHoverVariants } from '../utils/animationVariants.js';
 
@@ -78,7 +78,35 @@ const ItemDetailPage = () => {
     };
 
     fetchItemDetails();
-  }, [itemId, navigate]);
+
+    // Auto-refresh only prices and bids every 3 seconds (lightweight)
+    const intervalId = setInterval(async () => {
+      if (auctionItem) {
+        try {
+          const { prices } = await fetchItemPrices([itemId]);
+          if (prices.length > 0) {
+            const priceData = prices[0];
+            setAuctionItem((prev) => ({
+              ...prev,
+              currentPrice: priceData.currentPrice,
+              totalBids: priceData.totalBids,
+              highestBidder: priceData.highestBidder,
+              status: priceData.status,
+              isAuctionOver: priceData.isAuctionOver
+            }));
+          }
+          
+          // Fetch updated bid history
+          const historyResponse = await api.get(`/bids/${itemId}`);
+          setBidHistory(historyResponse.data.bids);
+        } catch (error) {
+          console.error('Failed to fetch price updates:', error);
+        }
+      }
+    }, 3000);
+
+    return () => clearInterval(intervalId);
+  }, [itemId, navigate, auctionItem?._id]);
 
   useEffect(() => {
     if (!socket || !isConnected || !itemId) {
