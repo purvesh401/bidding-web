@@ -64,7 +64,7 @@ const HomePage = () => {
     return () => clearInterval(intervalId);
   }, [items.length]);
 
-  // Real-time bid updates across all items
+  // Real-time bid updates across all items and auctions
   useEffect(() => {
     if (!socket || !isConnected) {
       console.log('HomePage: Socket not ready', { socket: !!socket, isConnected });
