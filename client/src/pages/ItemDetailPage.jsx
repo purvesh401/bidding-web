@@ -52,6 +52,7 @@ const ItemDetailPage = () => {
   const [isSubmittingBid, setIsSubmittingBid] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isInWatchlist, setIsInWatchlist] = useState(false);
+  const [hasShownEndNotification, setHasShownEndNotification] = useState(false);
 
   useEffect(() => {
     if (!itemId) {
@@ -84,7 +85,10 @@ const ItemDetailPage = () => {
       return;
     }
 
-    socket.emit('join-auction-room', itemId);
+    socket.emit('join-auction-room', {
+      itemId,
+      userId: authUser?._id || null
+    });
 
     const handleNewBidPlaced = (payload) => {
       setAuctionItem((previous) =>
@@ -132,7 +136,10 @@ const ItemDetailPage = () => {
             }
           : previous
       );
-      toast.success('This auction has ended.');
+      if (!hasShownEndNotification) {
+        setHasShownEndNotification(true);
+        toast.success('This auction has ended.');
+      }
     };
 
     socket.on('new-bid-placed', handleNewBidPlaced);
@@ -143,7 +150,7 @@ const ItemDetailPage = () => {
       socket.off('auction-ended', handleAuctionEnded);
       socket.emit('leave-auction-room', itemId);
     };
-  }, [socket, isConnected, itemId, authUser, auctionItem?.bidIncrement]);
+  }, [socket, isConnected, itemId, authUser, auctionItem?.bidIncrement, hasShownEndNotification]);
 
   const minimumBid = useMemo(() => {
     if (!auctionItem) {
@@ -297,7 +304,7 @@ const ItemDetailPage = () => {
 
               <div className="mb-4 p-3 rounded d-flex justify-content-between align-items-center" style={{ background: 'var(--background-gradient)' }}>
                 <span className="fw-semibold">Time Remaining:</span>
-                <CountdownTimer endTime={auctionItem.endTime} onAuctionEnd={() => toast.info('Auction ended.')} />
+                <CountdownTimer endTime={auctionItem.endTime} />
               </div>
 
               {!hasAuctionEnded && !isSeller && (
@@ -393,12 +400,6 @@ const ItemDetailPage = () => {
                     <th scope="row" className="fw-semibold">End Time</th>
                     <td>{formatDateTime(auctionItem.endTime)}</td>
                   </tr>
-                  <tr>
-                    <th scope="row" className="fw-semibold">Views</th>
-                    <td>
-                      <Badge bg="info">{auctionItem.viewCount}</Badge>
-                    </td>
-                  </tr>
                 </tbody>
               </Table>
 
@@ -415,7 +416,7 @@ const ItemDetailPage = () => {
                     Depth: {auctionItem.dimensions.depth ?? '—'} {auctionItem.dimensions.unit}
                   </ListGroup.Item>
                   <ListGroup.Item>
-                    Weight: {auctionItem.dimensions.weight ?? '—'} {auctionItem.dimensions.unit}
+                    Weight: {auctionItem.dimensions.weight ?? '—'} {auctionItem.dimensions.weightUnit}
                   </ListGroup.Item>
                 </ListGroup>
               )}

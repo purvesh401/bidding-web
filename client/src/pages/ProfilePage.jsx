@@ -161,7 +161,7 @@ const ProfilePage = () => {
                       height: '150px',
                       background: 'var(--primary-gradient)',
                       fontSize: '4rem',
-                      color: 'white'
+                      color: 'var(--text-inverse)'
                     }}
                   >
                     {authUser.username?.charAt(0).toUpperCase() || 'U'}
@@ -170,7 +170,6 @@ const ProfilePage = () => {
               </div>
               <h3 className="fw-bold mb-1">{authUser.username}</h3>
               <p className="text-muted mb-2">{authUser.email}</p>
-              <Badge bg="primary" className="mb-3">{authUser.role}</Badge>
               <div className="text-muted small">
                 <div className="d-flex align-items-center justify-content-center gap-2 mb-2">
                   <FaClock />
@@ -227,10 +226,6 @@ const ProfilePage = () => {
                         Phone Number
                       </div>
                       <div className="fw-semibold">{authUser.phoneNumber || 'Not provided'}</div>
-                    </Col>
-                    <Col md={6} className="mb-3">
-                      <div className="text-muted small mb-1">Account Type</div>
-                      <div className="fw-semibold text-capitalize">{authUser.role || '-'}</div>
                     </Col>
                   </Row>
 

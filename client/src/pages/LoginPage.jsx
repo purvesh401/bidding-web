@@ -8,6 +8,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Card, Form, Button } from 'react-bootstrap';
 import { motion } from 'framer-motion';
+import { toast } from 'react-toastify';
 import { useAuthContext } from '../hooks/useAuth.js';
 import { buttonHoverVariants } from '../utils/animationVariants.js';
 
@@ -34,6 +35,7 @@ const LoginPage = () => {
   const onSubmit = async (data) => {
     const result = await login(data);
     if (result.success) {
+      toast.success('Welcome back! Logged in successfully.');
       const redirectPath = location.state?.from?.pathname || '/dashboard';
       navigate(redirectPath, { replace: true });
     }
@@ -41,11 +43,34 @@ const LoginPage = () => {
 
   return (
     <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '70vh' }}>
-      <Card className="w-100 border-0 shadow-lg" style={{ maxWidth: '450px' }}>
-        <Card.Body className="p-4">
-          <div className="text-center mb-4">
-            <h2 className="fw-bold mb-2">🔐 Welcome Back!</h2>
-            <p className="text-muted">Login to continue bidding</p>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="w-100"
+        style={{ maxWidth: '450px' }}
+      >
+        <div className="glass-card p-5">
+          <div className="text-center mb-5">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', delay: 0.2 }}
+              className="mb-3"
+            >
+              <div className="d-inline-flex align-items-center justify-content-center" 
+                style={{ 
+                  width: '80px', 
+                  height: '80px', 
+                  borderRadius: '50%',
+                  background: 'var(--primary-gradient)',
+                  boxShadow: 'var(--neu-flat)'
+                }}>
+                <span style={{ fontSize: '2.5rem' }}>🔐</span>
+              </div>
+            </motion.div>
+            <h2 className="fw-bold mb-2 text-gradient">Welcome Back!</h2>
+            <p className="text-muted">Login to continue your auction journey</p>
           </div>
           <Form onSubmit={handleSubmit(onSubmit)}>
             <Form.Group className="mb-3" controlId="loginEmail">
@@ -71,19 +96,26 @@ const LoginPage = () => {
             </Form.Group>
 
             <motion.div variants={buttonHoverVariants} whileHover="hover" whileTap="tap">
-              <Button type="submit" className="w-100" disabled={isSubmitting}>
-                {isSubmitting ? 'Logging in…' : 'Login'}
+              <Button 
+                type="submit" 
+                className="w-100 btn-micro ripple" 
+                disabled={isSubmitting}
+                size="lg"
+              >
+                {isSubmitting ? '🔄 Logging in…' : '🚀 Login'}
               </Button>
             </motion.div>
           </Form>
 
-          <div className="text-center mt-3">
-            <small className="text-muted">
-              Need an account? <Link to="/register">Register here</Link>.
-            </small>
+          <div className="text-center mt-4">
+            <div className="neu-card-pressed p-3 rounded">
+              <small className="text-muted mb-0">
+                Need an account? <Link to="/register" className="text-decoration-none fw-semibold text-gradient">Register here →</Link>
+              </small>
+            </div>
           </div>
-        </Card.Body>
-      </Card>
+        </div>
+      </motion.div>
     </div>
   );
 };

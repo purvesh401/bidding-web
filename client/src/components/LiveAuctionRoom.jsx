@@ -9,7 +9,6 @@ import { useAuthContext } from '../hooks/useAuth.js';
 import { FaUsers, FaEye, FaClock, FaComments } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import './LiveAuctionRoom.css';
-import './LiveAuctionRoom.css';
 
 const LiveAuctionRoom = ({ itemId }) => {
   const { socket, isConnected } = useSocket();
@@ -18,7 +17,7 @@ const LiveAuctionRoom = ({ itemId }) => {
   const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState('');
   const [typingUsers, setTypingUsers] = useState(new Set());
-  const [showChat, setShowChat] = useState(false);
+  const [showChat, setShowChat] = useState(true); // Changed to true - chat visible by default
   const [notifications, setNotifications] = useState([]);
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -37,7 +36,10 @@ const LiveAuctionRoom = ({ itemId }) => {
     if (!socket || !isConnected || !itemId) return;
 
     console.log('🔵 Joining auction room:', itemId);
-    socket.emit('join-auction-room', itemId, authUser?._id);
+    socket.emit('join-auction-room', {
+      itemId,
+      userId: authUser?._id || null
+    });
 
     // Viewer count updates
     socket.on('viewer-count-update', (data) => {
@@ -164,7 +166,7 @@ const LiveAuctionRoom = ({ itemId }) => {
         >
           <FaEye className="stat-icon" />
           <span className="stat-value">{viewerCount}</span>
-          <span className="stat-label">Watching Live</span>
+          <span className="stat-label">Live Watchers</span>
         </motion.div>
 
         <div className="stat-item">
@@ -178,7 +180,7 @@ const LiveAuctionRoom = ({ itemId }) => {
         >
           <FaComments className="stat-icon" />
           <span className="stat-label">
-            {showChat ? 'Hide Chat' : 'Show Chat'}
+            {showChat ? 'Hide Live Chat' : 'Show Live Chat'}
           </span>
           {messages.length > 0 && !showChat && (
             <span className="chat-badge">{messages.length}</span>

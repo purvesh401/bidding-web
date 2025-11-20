@@ -218,7 +218,7 @@ const BidHistoryPage = () => {
           <Card.Body className="p-0">
             <div className="table-responsive">
               <Table hover className="mb-0">
-                <thead className="bg-light">
+                <thead style={{ backgroundColor: 'var(--background-secondary)' }}>
                   <tr>
                     <th>Item</th>
                     <th>Bid Amount</th>

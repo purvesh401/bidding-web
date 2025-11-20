@@ -53,16 +53,17 @@ const App = () => {
                   <Nav.Link as={Link} to="/profile" className="fw-semibold">Profile</Nav.Link>
                 </>
               )}
+
               {authUser ? (
-                <Button variant="outline-danger" onClick={logout} size="sm" className="ms-2">
+                <Button variant="outline-danger" onClick={logout} size="sm" className="ms-2 btn-micro">
                   Logout
                 </Button>
               ) : (
                 <div className="d-flex gap-2">
-                  <Button as={Link} to="/login" variant="primary" size="sm">
+                  <Button as={Link} to="/login" variant="primary" size="sm" className="btn-micro">
                     Login
                   </Button>
-                  <Button as={Link} to="/register" variant="secondary" size="sm">
+                  <Button as={Link} to="/register" variant="secondary" size="sm" className="btn-micro">
                     Register
                   </Button>
                 </div>

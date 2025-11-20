@@ -18,6 +18,11 @@ const auctionDimensionsSchema = new Schema(
       type: String,
       enum: ['inches', 'cm', 'feet', 'meters'],
       default: 'inches'
+    },
+    weightUnit: {
+      type: String,
+      enum: ['kg', 'lbs', 'g', 'oz'],
+      default: 'kg'
     }
   },
   { _id: false }
