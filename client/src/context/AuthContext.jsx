@@ -75,7 +75,6 @@ export const AuthContextProvider = ({ children }) => {
     try {
       const response = await api.post('/auth/login', credentials);
       setAuthUser(response.data.user);
-      toast.success('Logged in successfully.');
       return { success: true };
     } catch (error) {
       const message = error.response?.data?.message || 'Unable to log in.';
@@ -94,7 +93,6 @@ export const AuthContextProvider = ({ children }) => {
     try {
       const response = await api.post('/auth/register', payload);
       setAuthUser(response.data.user);
-      toast.success('Account created successfully.');
       return { success: true };
     } catch (error) {
       const message = error.response?.data?.message || 'Unable to register.';

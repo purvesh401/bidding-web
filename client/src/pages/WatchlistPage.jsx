@@ -61,7 +61,7 @@ const WatchlistPage = () => {
             <FaHeart className="me-2 text-danger" />
             My Watchlist
           </h1>
-          <p className="text-muted lead">Track your favorite auction items</p>
+          <p className="lead" style={{ color: 'var(--text-secondary)' }}>Track your favorite auction items</p>
         </div>
         <Badge bg="primary" className="fs-6 px-3 py-2">
           {watchlist.length} {watchlist.length === 1 ? 'Item' : 'Items'}

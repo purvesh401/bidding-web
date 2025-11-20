@@ -91,29 +91,48 @@ const io = new SocketIOServer(server, {
  */
 
 // Store active users per auction room
+// Map structure: itemId -> Map(userId -> Set of socket IDs)
 const activeRooms = new Map();
 
 io.on('connection', (socket) => {
   console.log(`🔌 Socket connected: ${socket.id}`);
 
   // User joins an auction room
-  socket.on('join-auction-room', (itemId) => {
+  socket.on('join-auction-room', (data) => {
+    const itemId = typeof data === 'object' ? data.itemId : data;
+    const userId = typeof data === 'object' ? data.userId : null;
+    
     socket.join(`auction_${itemId}`);
     
-    // Track active viewers
+    // Track active viewers by unique user
     if (!activeRooms.has(itemId)) {
-      activeRooms.set(itemId, new Set());
+      activeRooms.set(itemId, new Map());
     }
-    activeRooms.get(itemId).add(socket.id);
     
-    // Notify room about viewer count
-    const viewerCount = activeRooms.get(itemId).size;
+    const roomUsers = activeRooms.get(itemId);
+    
+    // If userId is provided, track by user; otherwise track by socket
+    const trackingKey = userId || socket.id;
+    
+    if (!roomUsers.has(trackingKey)) {
+      roomUsers.set(trackingKey, new Set());
+    }
+    roomUsers.get(trackingKey).add(socket.id);
+    
+    // Store userId in socket for cleanup later
+    if (userId) {
+      socket.userId = userId;
+      socket.currentItemId = itemId;
+    }
+    
+    // Count unique users (not sockets)
+    const viewerCount = roomUsers.size;
     io.to(`auction_${itemId}`).emit('viewer-count-update', {
       itemId,
       count: viewerCount
     });
     
-    console.log(`👥 Socket ${socket.id} joined auction room ${itemId} (${viewerCount} viewers)`);
+    console.log(`👥 Socket ${socket.id} (User: ${userId || 'guest'}) joined auction room ${itemId} (${viewerCount} unique viewers)`);
   });
 
   // User leaves an auction room
@@ -122,8 +141,20 @@ io.on('connection', (socket) => {
     
     // Update viewer count
     if (activeRooms.has(itemId)) {
-      activeRooms.get(itemId).delete(socket.id);
-      const viewerCount = activeRooms.get(itemId).size;
+      const roomUsers = activeRooms.get(itemId);
+      const trackingKey = socket.userId || socket.id;
+      
+      if (roomUsers.has(trackingKey)) {
+        const userSockets = roomUsers.get(trackingKey);
+        userSockets.delete(socket.id);
+        
+        // If user has no more sockets, remove them from the room
+        if (userSockets.size === 0) {
+          roomUsers.delete(trackingKey);
+        }
+      }
+      
+      const viewerCount = roomUsers.size;
       
       if (viewerCount === 0) {
         activeRooms.delete(itemId);
@@ -133,9 +164,9 @@ io.on('connection', (socket) => {
           count: viewerCount
         });
       }
+      
+      console.log(`🚪 Socket ${socket.id} (User: ${socket.userId || 'guest'}) left auction room ${itemId} (${viewerCount} unique viewers)`);
     }
-    
-    console.log(`🚪 Socket ${socket.id} left auction room ${itemId}`);
   });
 
   // Real-time chat message
@@ -190,10 +221,19 @@ io.on('connection', (socket) => {
     console.log(`❌ Socket disconnected (${socket.id}): ${reason}`);
     
     // Remove from all auction rooms
-    activeRooms.forEach((viewers, itemId) => {
-      if (viewers.has(socket.id)) {
-        viewers.delete(socket.id);
-        const viewerCount = viewers.size;
+    activeRooms.forEach((roomUsers, itemId) => {
+      const trackingKey = socket.userId || socket.id;
+      
+      if (roomUsers.has(trackingKey)) {
+        const userSockets = roomUsers.get(trackingKey);
+        userSockets.delete(socket.id);
+        
+        // If user has no more sockets, remove them from the room
+        if (userSockets.size === 0) {
+          roomUsers.delete(trackingKey);
+        }
+        
+        const viewerCount = roomUsers.size;
         
         if (viewerCount === 0) {
           activeRooms.delete(itemId);

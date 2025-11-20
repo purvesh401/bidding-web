@@ -69,7 +69,7 @@ const AuctionsPage = () => {
       <div className="d-flex justify-content-between align-items-center mb-5">
         <div>
           <h1 className="display-5 fw-bold mb-2">Live Auctions</h1>
-          <p className="lead text-secondary mb-0">Bid in real time on rare antiques and collectibles</p>
+          <p className="lead mb-0" style={{ color: 'var(--text-secondary)' }}>Bid in real time on rare antiques and collectibles</p>
         </div>
         <Badge bg="primary" className="fs-6 px-3 py-2">
           Real-Time Updates
@@ -140,7 +140,7 @@ const AuctionsPage = () => {
               <div className="empty-state">
                 <div className="empty-state-icon" />
                 <h3 className="fw-bold mb-2">No items found</h3>
-                <p className="text-muted">No items match the selected filters. Try adjusting your search criteria.</p>
+                <p style={{ color: 'var(--text-muted)' }}>No items match the selected filters. Try adjusting your search criteria.</p>
               </div>
             </Col>
           )}

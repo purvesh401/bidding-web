@@ -30,6 +30,7 @@ const CountdownTimer = ({ endTime, onAuctionEnd }) => {
     seconds: 0,
     isExpired: false
   });
+  const [hasEnded, setHasEnded] = useState(false);
 
   useEffect(() => {
     const updateRemainingTime = () => {
@@ -39,7 +40,10 @@ const CountdownTimer = ({ endTime, onAuctionEnd }) => {
 
       if (diffInMs <= 0) {
         setTimeRemaining({ days: 0, hours: 0, minutes: 0, seconds: 0, isExpired: true });
-        onAuctionEnd?.();
+        if (!hasEnded) {
+          setHasEnded(true);
+          onAuctionEnd?.();
+        }
         return;
       }
 
@@ -54,7 +58,7 @@ const CountdownTimer = ({ endTime, onAuctionEnd }) => {
     updateRemainingTime();
     const intervalId = setInterval(updateRemainingTime, 1000);
     return () => clearInterval(intervalId);
-  }, [endTime, onAuctionEnd]);
+  }, [endTime, onAuctionEnd, hasEnded]);
 
   const formatTimeDisplay = () => {
     const { days, hours, minutes, seconds, isExpired } = timeRemaining;

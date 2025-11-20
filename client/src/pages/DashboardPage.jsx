@@ -45,7 +45,7 @@ const DashboardPage = () => {
     <div>
       <div className="mb-5">
         <h1 className="display-6 fw-bold mb-2">Welcome back, {authUser.username}!</h1>
-        <p className="text-muted lead">Here's your auction dashboard</p>
+        <p className="lead" style={{ color: 'var(--text-secondary)' }}>Here's your auction dashboard</p>
       </div>
       <Row className="g-4">
         <Col lg={4}>
@@ -55,11 +55,11 @@ const DashboardPage = () => {
               <ListGroup variant="flush">
                 <ListGroup.Item className="d-flex justify-content-between align-items-center">
                   <span className="fw-semibold">Email:</span>
-                  <span className="text-muted">{authUser.email}</span>
+                  <span style={{ color: 'var(--text-secondary)' }}>{authUser.email}</span>
                 </ListGroup.Item>
                 <ListGroup.Item className="d-flex justify-content-between align-items-center">
                   <span className="fw-semibold">Last Login:</span>
-                  <span className="text-muted small">{authUser.lastLogin ? formatDateTime(authUser.lastLogin) : 'Not recorded'}</span>
+                  <span className="small" style={{ color: 'var(--text-secondary)' }}>{authUser.lastLogin ? formatDateTime(authUser.lastLogin) : 'Not recorded'}</span>
                 </ListGroup.Item>
               </ListGroup>
             </Card.Body>
@@ -79,11 +79,11 @@ const DashboardPage = () => {
                     <ListGroup.Item as={Link} to={`/items/${item._id}`} action key={item._id} className="d-flex justify-content-between align-items-center">
                       <div>
                         {item.title}
-                        <div className="text-muted small">Ends {formatDateTime(item.endTime)}</div>
+                        <div className="small" style={{ color: 'var(--text-muted)' }}>Ends {formatDateTime(item.endTime)}</div>
                       </div>
                       <div className="text-end">
                         <div>{formatCurrency(item.currentPrice)}</div>
-                        <div className="text-muted small">{item.totalBids} bids</div>
+                        <div className="small" style={{ color: 'var(--text-muted)' }}>{item.totalBids} bids</div>
                       </div>
                     </ListGroup.Item>
                   ))}
@@ -91,7 +91,7 @@ const DashboardPage = () => {
               ) : (
                 <div className="empty-state">
                   <div className="empty-state-icon" />
-                  <p className="text-muted mb-0">No active auctions at the moment.</p>
+                  <p className="mb-0" style={{ color: 'var(--text-muted)' }}>No active auctions at the moment.</p>
                 </div>
               )}
             </Card.Body>
@@ -112,11 +112,11 @@ const DashboardPage = () => {
                   <ListGroup.Item as={Link} to={`/items/${item._id}`} action key={item._id} className="d-flex justify-content-between align-items-center">
                     <div>
                       {item.title}
-                      <div className="text-muted small">Status: {item.status}</div>
+                      <div className="small" style={{ color: 'var(--text-muted)' }}>Status: {item.status}</div>
                     </div>
                     <div className="text-end">
                       <div>{formatCurrency(item.currentPrice)}</div>
-                      <div className="text-muted small">{item.totalBids} bids</div>
+                      <div className="small" style={{ color: 'var(--text-muted)' }}>{item.totalBids} bids</div>
                     </div>
                   </ListGroup.Item>
                 ))}
@@ -124,7 +124,7 @@ const DashboardPage = () => {
           ) : (
             <div className="empty-state">
               <div className="empty-state-icon" />
-              <p className="text-muted mb-0">You have not created any listings yet.</p>
+              <p className="mb-0" style={{ color: 'var(--text-muted)' }}>You have not created any listings yet.</p>
             </div>
           )}
         </Card.Body>
