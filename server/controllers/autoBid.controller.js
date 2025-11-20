@@ -217,7 +217,7 @@ export const processAutoBidding = async (itemId, latestBidderId, currentPrice, s
       const populatedBid = await Bid.findById(autoBidDocument[0]._id)
         .populate('bidderId', 'username');
 
-      socketIo.to(`auction_${itemId}`).emit('new-bid-placed', {
+      const autoBidData = {
         itemId,
         newPrice: nextBidAmount,
         previousPrice: currentPrice,
@@ -228,7 +228,13 @@ export const processAutoBidding = async (itemId, latestBidderId, currentPrice, s
         timestamp: autoBidDocument[0].timestamp,
         bidId: autoBidDocument[0]._id,
         isAutoBid: true
-      });
+      };
+
+      // Emit to specific auction room
+      socketIo.to(`auction_${itemId}`).emit('new-bid-placed', autoBidData);
+      
+      // Emit globally for all pages
+      socketIo.emit('new-bid-placed', autoBidData);
 
       socketIo.to(`auction_${itemId}`).emit('auction-alert', {
         message: `Auto-bid placed by ${populatedBid.bidderId.username}: $${nextBidAmount}`,

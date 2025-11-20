@@ -273,3 +273,33 @@ export const deleteItem = async (req, res) => {
     res.status(500).json({ message: 'Server error while deleting auction item.' });
   }
 };
+
+/**
+ * @function getItemPrices
+ * @description Lightweight endpoint to get only current prices and bid counts for multiple items.
+ * Used for real-time updates without fetching full item data.
+ * @param {import('express').Request} req - Express request object.
+ * @param {import('express').Response} res - Express response object.
+ * @returns {Promise<void>}
+ */
+export const getItemPrices = async (req, res) => {
+  try {
+    const { itemIds } = req.query;
+    
+    if (!itemIds) {
+      return res.status(400).json({ message: 'itemIds query parameter is required.' });
+    }
+
+    const ids = Array.isArray(itemIds) ? itemIds : itemIds.split(',');
+    
+    const items = await Item.find(
+      { _id: { $in: ids } },
+      { _id: 1, currentPrice: 1, totalBids: 1, highestBidder: 1, status: 1, isAuctionOver: 1 }
+    ).lean();
+
+    res.status(200).json({ prices: items });
+  } catch (error) {
+    console.error('Error fetching item prices:', error);
+    res.status(500).json({ message: 'Server error while fetching prices.' });
+  }
+};
